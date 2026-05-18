@@ -2,7 +2,7 @@ import type { Skin } from '@/lib/types';
 import https from 'https';
 
 const STEAM_ID = '76561198712742591';
-const CACHE_TTL = 30_000;
+const CACHE_TTL = 5_000;
 
 let cached: Skin[] | null = null;
 let lastFetch = 0;

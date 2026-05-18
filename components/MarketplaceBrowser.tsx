@@ -16,31 +16,37 @@ export function MarketplaceBrowser() {
   const [maxPrice, setMaxPrice] = useState(5_000_000);
 
   useEffect(() => {
-    fetch('/api/catalog')
-      .then((r) => r.json())
-      .then((data) => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const r = await fetch('/api/catalog')
+        const data = await r.json()
+        if (cancelled) return
         if (data.skins) {
           setAllSkins(data.skins);
-
-          const weapons = [...new Set(data.skins.map((s: Skin) => s.weaponType))].sort();
-          const rarities = [...new Map(data.skins.map((s: Skin) => [s.rarityKey, s.rarity])).entries()];
-
           const prices = data.skins.map((s: Skin) => s.priceUsd);
-          const minP = Math.min(...prices);
-          const maxP = Math.max(...prices);
-
-          setMinPrice(Number.isFinite(minP) ? minP : 0);
-          setMaxPrice(Number.isFinite(maxP) ? maxP : 5_000_000);
+          setMinPrice((prev) => Number.isFinite(prev) ? prev : (Math.min(...prices) || 0));
+          setMaxPrice((prev) => Number.isFinite(prev) ? prev : (Math.max(...prices) || 5_000_000));
           setLoaded(true);
         } else {
           setError('Ma\'lumot topilmadi');
           setLoaded(true);
         }
-      })
-      .catch(() => {
-        setError('Serverga ulanishda xatolik');
-        setLoaded(true);
-      });
+      } catch {
+        if (!cancelled) {
+          setError('Serverga ulanishda xatolik');
+          setLoaded(true);
+        }
+      }
+    }
+
+    load()
+    const interval = setInterval(load, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, []);
 
   const results = useMemo(() => {
