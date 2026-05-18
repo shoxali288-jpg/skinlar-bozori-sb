@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+dist
+.env*.local
+npm-debug.log*
+.DS_Store
+
+# CSGO-API dump (~5MB); generator downloads if missing
+data/skins.json
+.vercel
