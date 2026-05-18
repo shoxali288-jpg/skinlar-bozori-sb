@@ -38,13 +38,7 @@ export default async function HomePage() {
               href="/marketplace"
               className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-neon-dim to-neon px-6 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
             >
-              Inventarni ochish
-            </Link>
-            <Link
-              href="https://steamcommunity.com/profiles/76561198712742591"
-              className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
-            >
-              Steam profil
+              Bozorga o&apos;tish
             </Link>
           </div>
         </div>
