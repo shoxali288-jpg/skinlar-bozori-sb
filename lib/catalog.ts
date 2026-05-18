@@ -21,7 +21,15 @@ function fetchUrl(url: string): Promise<{ status: number; body: string }> {
 
 function extractWeaponType(name: string): string {
   const parts = name.split(' | ');
-  return parts.length > 1 ? parts[0].trim() : 'Skin';
+  if (parts.length > 1) return parts[0].trim()
+  const lower = name.toLowerCase()
+  if (lower.includes('case') || lower.includes('capsule')) return 'Case'
+  if (lower.includes('sticker') || lower.includes('decal')) return 'Sticker'
+  if (lower.includes('graffiti')) return 'Graffiti'
+  if (lower.includes('patch')) return 'Patch'
+  if (lower.includes('souvenir')) return 'Souvenir'
+  if (lower.includes('key')) return 'Key'
+  return name.replace(/\(.*\)/g, '').trim() || 'Other'
 }
 
 function extractCondition(name: string, desc: string): string {
