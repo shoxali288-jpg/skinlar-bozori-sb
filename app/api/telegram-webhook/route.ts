@@ -14,8 +14,27 @@ async function sendMessage(chatId: number, text: string, extra?: Record<string, 
   })
 }
 
+async function reactToMessage(chatId: number, messageId: number, emoji: string) {
+  await fetch(`${TELEGRAM_API}/setMessageReaction`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId, reaction: [{ type: 'emoji', emoji }] }),
+  })
+}
+
 async function sendWelcome(chatId: number) {
-  const text = `💜`
+  const text = `Assalomu alaykum.
+
+Skinlar Bozori'ga xush kelibsiz 🔥
+
+Bu yerda siz:
+🎯 CS2 skinlarni sotib olishingiz
+💸 Skin sotishingiz
+⚡ Eng yaxshi narxlarni topishingiz mumkin
+
+🛒 Marketni ochish uchun pastdagi "SB" tugmasini bosing.
+
+🚀 Tezkor • Ishonchli • Premium`
 
   await sendMessage(chatId, text, {
     reply_markup: {
@@ -33,7 +52,7 @@ export async function POST(request: NextRequest) {
     const update = await request.json()
 
     if (update.message) {
-      const { chat, text } = update.message
+      const { chat, text, message_id } = update.message
       const chatId = chat.id
 
       if (!text) {
@@ -41,15 +60,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true })
       }
 
-      const cmd = text.split(' ')[0].toLowerCase()
-
-      switch (cmd) {
-        case '/start':
-          await sendWelcome(chatId)
-          break
-        default:
-          await sendWelcome(chatId)
-      }
+      await reactToMessage(chatId, message_id, '💜')
+      await sendWelcome(chatId)
     }
 
     return NextResponse.json({ ok: true })
