@@ -52,6 +52,7 @@ Quyidagi bo'limlardan birini tanlang:`
     parse_mode: 'HTML',
     reply_markup: {
       inline_keyboard: [
+        [{ text: '🌐 Saytni ochish', url: SITE_URL }],
         [{ text: '👥 Foydalanuvchilar', callback_data: 'admin_users' }],
         [{ text: '➕ Skin qo\'shish', callback_data: 'admin_add_skin' }],
         [{ text: '📊 Statistika', callback_data: 'admin_stats' }],
