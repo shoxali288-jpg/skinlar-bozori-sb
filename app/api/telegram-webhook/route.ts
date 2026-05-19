@@ -15,11 +15,16 @@ async function sendMessage(chatId: number, text: string, extra?: Record<string, 
 }
 
 async function reactToMessage(chatId: number, messageId: number, emoji: string) {
-  await fetch(`${TELEGRAM_API}/setMessageReaction`, {
+  const res = await fetch(`${TELEGRAM_API}/setMessageReaction`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, message_id: messageId, reaction: [{ type: 'emoji', emoji }] }),
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId, reaction: [{ type: 'emoji', emoji }], is_big: false }),
   })
+  const data = await res.json()
+  if (!data.ok) {
+    console.error('Reaction error:', JSON.stringify(data))
+    await sendMessage(chatId, emoji)
+  }
 }
 
 async function sendWelcome(chatId: number) {
