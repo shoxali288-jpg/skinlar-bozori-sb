@@ -14,19 +14,6 @@ async function sendMessage(chatId: number, text: string, extra?: Record<string, 
   })
 }
 
-async function reactToMessage(chatId: number, messageId: number, emoji: string) {
-  const res = await fetch(`${TELEGRAM_API}/setMessageReaction`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, message_id: messageId, reaction: [{ type: 'emoji', emoji }], is_big: false }),
-  })
-  const data = await res.json()
-  if (!data.ok) {
-    console.error('Reaction error:', JSON.stringify(data))
-    await sendMessage(chatId, emoji)
-  }
-}
-
 async function sendWelcome(chatId: number) {
   const text = `Assalomu alaykum.
 
@@ -57,7 +44,7 @@ export async function POST(request: NextRequest) {
     const update = await request.json()
 
     if (update.message) {
-      const { chat, text, message_id } = update.message
+      const { chat, text } = update.message
       const chatId = chat.id
 
       if (!text) {
@@ -65,7 +52,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true })
       }
 
-      await reactToMessage(chatId, message_id, '💜')
       await sendWelcome(chatId)
     }
 
