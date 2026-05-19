@@ -15,18 +15,7 @@ async function sendMessage(chatId: number, text: string, extra?: Record<string, 
 }
 
 async function sendWelcome(chatId: number) {
-  const text = `💜 Assalomu alaykum.
-
-Skinlar Bozori'ga xush kelibsiz 🔥
-
-Bu yerda siz:
-🎯 CS2 skinlarni sotib olishingiz
-💸 Skin sotishingiz
-⚡ Eng yaxshi narxlarni topishingiz mumkin
-
-🛒 Marketni ochish uchun pastdagi "SB" tugmasini bosing.
-
-🚀 Tezkor • Ishonchli • Premium`
+  const text = `💜`
 
   await sendMessage(chatId, text, {
     reply_markup: {
