@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addManualSkin, removeManualSkin, getManualSkins } from '@/lib/manual-skins'
+import { getSteamSkinImage } from '@/lib/steam-image'
 
 export async function GET() {
   const skins = getManualSkins()
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
 
   const parts = name.split(' | ')
   const weaponType = parts.length > 1 ? parts[0].trim() : ''
-  const imgUrl = body.image || ''
+  const imgUrl = body.image || await getSteamSkinImage(name)
 
   const skin = addManualSkin(name, weaponType, '', '', imgUrl, 0)
   return NextResponse.json(skin)
