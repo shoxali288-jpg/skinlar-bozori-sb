@@ -16,6 +16,7 @@ interface UserInfo {
 
 let users: Map<number, UserInfo> = new Map()
 let lastBotMsg: Map<number, number> = new Map()
+let welcomePhoto: string | null = null
 
 async function deletePrev(chatId: number) {
   const prevId = lastBotMsg.get(chatId)
@@ -95,7 +96,7 @@ Bu yerda siz:
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      photo: 'https://skinlar-bozori-sb.vercel.app/logo.jpg',
+      photo: welcomePhoto || 'https://skinlar-bozori-sb.vercel.app/logo.jpg',
       caption: text,
       parse_mode: 'HTML',
       reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
@@ -239,7 +240,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (update.message) {
-      const { chat, text, from } = update.message
+      const { chat, text, from, photo } = update.message
       const chatId = chat.id
       const username = from?.username || ''
 
@@ -252,12 +253,22 @@ export async function POST(request: NextRequest) {
         })
       }
 
+      const isAdmin = username.toLowerCase() === ADMIN_USERNAME
+
+      // Admin sent a photo → save as welcome photo
+      if (isAdmin && photo && photo.length > 0) {
+        const fileId = photo[photo.length - 1].file_id
+        welcomePhoto = fileId
+        await sendMessage(chatId, `✅ Rasm saqlandi! Endi /start da shu rasm ko'rinadi.`)
+        return NextResponse.json({ ok: true })
+      }
+
       if (!text) {
         await sendMessage(chatId, 'Фақат матнли хабарларни қабул қиламан')
         return NextResponse.json({ ok: true })
       }
 
-      const isAdmin = username.toLowerCase() === ADMIN_USERNAME
+
 
       // /start → welcome (for everyone)
       if (text.toLowerCase() === '/start') {
