@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addManualSkin, removeManualSkin, getManualSkinsList, getManualSkins } from '@/lib/manual-skins'
+import fs from 'fs'
 
 const BOT_TOKEN = process.env.BOT_TOKEN || ''
 const ADMIN_USERNAME = 'shoxsvoy'
@@ -97,7 +98,7 @@ Bu yerda siz:
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      photo: welcomePhoto || 'https://skinlar-bozori-sb.vercel.app/logo.jpg',
+      photo: welcomePhoto || `${SITE_URL}/api/welcome-photo`,
       caption: text,
       parse_mode: 'HTML',
       reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
@@ -260,7 +261,18 @@ export async function POST(request: NextRequest) {
       // Photo → only admin can set welcome photo
       if (photo && photo.length > 0) {
         if (isAdmin || from.id === adminUserId) {
-          welcomePhoto = photo[photo.length - 1].file_id
+          const fileId = photo[photo.length - 1].file_id
+          welcomePhoto = `${SITE_URL}/api/welcome-photo`
+          // Download photo from Telegram and save to /tmp/
+          try {
+            const fileRes = await fetch(`${TELEGRAM_API}/getFile?file_id=${fileId}`)
+            const fileData = await fileRes.json()
+            if (fileData.result?.file_path) {
+              const imgRes = await fetch(`${TELEGRAM_API}/file/${BOT_TOKEN}/${fileData.result.file_path}`)
+              const imgBuf = Buffer.from(await imgRes.arrayBuffer())
+              fs.writeFileSync('/tmp/welcome.jpg', imgBuf)
+            }
+          } catch {}
           await sendMessage(chatId, `✅ Rasm saqlandi! Endi /start da shu rasm ko'rinadi.`)
           return NextResponse.json({ ok: true })
         }
