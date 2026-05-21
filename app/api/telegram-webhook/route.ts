@@ -68,7 +68,7 @@ async function getSteamSkinImage(skinName: string): Promise<string> {
   return 'https://community.akamai.steamstatic.com/public/shared/images/subscribed_apps/game_overlay/730.png'
 }
 
-async function sendWelcome(chatId: number) {
+async function sendWelcome(chatId: number, noPhoto?: boolean) {
   const text = `Assalomu alaykum.
 
 Skinlar Bozori'ga xush kelibsiz 🔥
@@ -82,11 +82,29 @@ Bu yerda siz:
 
 🚀 Tezkor • Ishonchli • Premium`
 
-  await sendMessage(chatId, text, {
-    reply_markup: {
-      inline_keyboard: [[{ text: 'SB', url: SITE_URL }]],
-    },
+  if (noPhoto) {
+    await sendMessage(chatId, text, {
+      reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
+    })
+    return
+  }
+
+  await deletePrev(chatId)
+  const res = await fetch(`${TELEGRAM_API}/sendPhoto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      photo: 'https://skinlar-bozori-sb.vercel.app/logo.jpg',
+      caption: text,
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
+    }),
   })
+  const data = await res.json()
+  if (data.result?.message_id) {
+    lastBotMsg.set(chatId, data.result.message_id)
+  }
 }
 
 async function sendAdminMenu(chatId: number) {
