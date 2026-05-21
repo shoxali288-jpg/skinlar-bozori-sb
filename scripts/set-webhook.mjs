@@ -15,12 +15,12 @@ async function main() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         url: WEBHOOK_URL,
-        allowed_updates: ['message'],
+        allowed_updates: ['message', 'callback_query'],
       }),
     })
     const data = await res.json()
     if (data.ok) {
-      console.log(`✅ Webhook set: ${WEBHOOK_URL}`)
+      console.log(`✅ Webhook set: ${WEBHOOK_URL} with allowed_updates: message, callback_query`)
     } else {
       console.error(`❌ Webhook error: ${data.description}`)
     }

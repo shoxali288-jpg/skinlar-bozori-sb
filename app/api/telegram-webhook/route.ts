@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { addManualSkin, removeManualSkin, getManualSkinsList, getManualSkins } from '@/lib/manual-skins'
 
 const BOT_TOKEN = process.env.BOT_TOKEN || ''
 const ADMIN_USERNAME = 'shoxsvoy'
@@ -6,7 +7,15 @@ const SITE_URL = 'https://skinlar-bozori-sb.vercel.app'
 
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 
-let users: Set<number> = new Set()
+interface UserInfo {
+  id: number
+  username?: string
+  first_name?: string
+  last_name?: string
+}
+
+let users: Map<number, UserInfo> = new Map()
+let adminState: Map<number, { action: string; tempId?: string }> = new Map()
 
 async function callTelegram(method: string, body: Record<string, unknown>) {
   await fetch(`${TELEGRAM_API}/${method}`, {
@@ -55,6 +64,7 @@ Quyidagi bo'limlardan birini tanlang:`
         [{ text: '🌐 Saytni ochish', url: SITE_URL }],
         [{ text: '👥 Foydalanuvchilar', callback_data: 'admin_users' }],
         [{ text: '➕ Skin qo\'shish', callback_data: 'admin_add_skin' }],
+        [{ text: '➖ Skin o\'chirish', callback_data: 'admin_delete_skin' }],
         [{ text: '📊 Statistika', callback_data: 'admin_stats' }],
         [{ text: '🔄 Yangilash', callback_data: 'admin_refresh' }],
       ],
@@ -66,8 +76,25 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
   switch (callbackData) {
     case 'admin_users': {
       const count = users.size
-      const list = Array.from(users).join(', ') || 'Hali foydalanuvchilar yo\'q'
-      await sendMessage(chatId, `👥 <b>Foydalanuvchilar:</b> ${count}\n\nChat ID: ${list}`, {
+      if (count === 0) {
+        await sendMessage(chatId, `👥 <b>Foydalanuvchilar:</b> 0\n\nHali foydalanuvchilar yo\'q`, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_back' }]],
+          },
+        })
+        break
+      }
+      
+      let list = ''
+      for (const [, info] of users) {
+        const name = info.username 
+          ? `@${info.username}` 
+          : (info.first_name || '') + (info.last_name ? ` ${info.last_name}` : '')
+        list += `• ${name || `ID: ${info.id}`}\n`
+      }
+      
+      await sendMessage(chatId, `👥 <b>Foydalanuvchilar (${count}):</b>\n\n${list.trim()}`, {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_back' }]],
@@ -76,30 +103,71 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       break
     }
     case 'admin_stats': {
+      const manual = getManualSkins()
       await sendMessage(
         chatId,
-        `📊 <b>Statistika</b>\n\nFoydalanuvchilar: ${users.size}`,
+        `📊 <b>Statistika</b>\n\n👥 Foydalanuvchilar: ${users.size}\n📦 Qo\'lda qo\'shilgan skinlar: ${manual.length}`,
         { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_back' }]] } },
       )
       break
     }
     case 'admin_add_skin': {
+      adminState.set(chatId, { action: 'awaiting_skin_name' })
       await sendMessage(
         chatId,
-        `➕ <b>Skin qo'shish</b>\n\nMenga Steam Market linkini yuboring.\n\nMasalan:\n<code>https://steamcommunity.com/market/listings/730/AK-47%20|%20Redline%20(Field-Tested)</code>`,
-        { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_back' }]] } },
+        `➕ <b>Skin qo'shish</b>\n\n1️⃣ Yuboring: <b>Skin nomi</b>\n\nMasalan:\n<code>AK-47 | Redline (Field-Tested)</code>`,
+        { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Bekor qilish', callback_data: 'admin_back' }]] } },
+      )
+      break
+    }
+    case 'admin_delete_skin': {
+      const list = getManualSkinsList()
+      if (list.length === 0) {
+        await sendMessage(
+          chatId,
+          `➖ <b>Skin o'chirish</b>\n\nHozircha qo'lda qo'shilgan skinlar yo'q.`,
+          { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_back' }]] } },
+        )
+        break
+      }
+      
+      const keyboard = list.map((s) => [{ text: s.name, callback_data: `admin_del_${s.id}` }])
+      keyboard.push([{ text: '🔙 Orqaga', callback_data: 'admin_back' }])
+      
+      await sendMessage(
+        chatId,
+        `➖ <b>Skin o'chirish</b>\n\nO'chirmoqchi bo'lgan skinngni tanlang:`,
+        { parse_mode: 'HTML', reply_markup: { inline_keyboard: keyboard } },
       )
       break
     }
     case 'admin_refresh': {
-      await sendMessage(chatId, '🔄 Sayt yangilanmoqda...', {
+      await sendMessage(chatId, '🔄 Sayt yangilanmoqda... Sahifani qayta yuklang.', {
         reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_back' }]] },
       })
       break
     }
     case 'admin_back':
+      adminState.delete(chatId)
       await sendAdminMenu(chatId)
       break
+    default: {
+      if (callbackData.startsWith('admin_del_')) {
+        const id = callbackData.slice('admin_del_'.length)
+        const removed = removeManualSkin(id)
+        if (removed) {
+          await sendMessage(chatId, `✅ Skin o'chirildi!`, {
+            parse_mode: 'HTML',
+            reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_back' }]] },
+          })
+        } else {
+          await sendMessage(chatId, `❌ Skin topilmadi.`, {
+            parse_mode: 'HTML',
+            reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_back' }]] },
+          })
+        }
+      }
+    }
   }
 }
 
@@ -123,7 +191,14 @@ export async function POST(request: NextRequest) {
       const chatId = chat.id
       const username = from?.username || ''
 
-      users.add(chatId)
+      if (!users.has(chatId)) {
+        users.set(chatId, {
+          id: chatId,
+          username: from?.username,
+          first_name: from?.first_name,
+          last_name: from?.last_name,
+        })
+      }
 
       if (!text) {
         await sendMessage(chatId, 'Фақат матнли хабарларни қабул қиламан')
@@ -132,12 +207,50 @@ export async function POST(request: NextRequest) {
 
       // Admin check
       if (username.toLowerCase() === ADMIN_USERNAME) {
-        // Check if it's a Steam market link
-        if (text.includes('steamcommunity.com/market/listings')) {
-          const skinName = decodeURIComponent(text.split('/listings/730/')[1] || '')
+        const state = adminState.get(chatId)
+
+        if (state?.action === 'awaiting_skin_name') {
+          const name = text.trim()
+          adminState.set(chatId, { action: 'awaiting_skin_image' })
+          const skin = addManualSkin(name, '', '', '', '', 0)
+          adminState.set(chatId, { action: 'awaiting_skin_image', tempId: skin.id })
           await sendMessage(
             chatId,
-            `✅ <b>Skin topildi!</b>\n\n${skinName.replace(/%20/g, ' ')}\n\nHozircha qo'lda qo'shiladi. Admin bilan bog'lanib skin nomini tasdiqlang.`,
+            `✅ Skin nomi saqlandi: <b>${name}</b>\n\n2️⃣ Endi rasm URL yuboring (yoki 0 - rasm yo'q):`,
+            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Bekor qilish', callback_data: 'admin_back' }]] } },
+          )
+          return NextResponse.json({ ok: true })
+        }
+
+        if (state?.action === 'awaiting_skin_image') {
+          const imgUrl = text.trim()
+          const tempId = state.tempId
+          if (imgUrl !== '0') {
+            const manualList = getManualSkins()
+            const skin = manualList.find((s) => s.id === tempId)
+            if (skin) {
+              skin.image = imgUrl
+            }
+          }
+          adminState.delete(chatId)
+          await sendMessage(
+            chatId,
+            `✅ <b>Skin qo'shildi!</b>\n\nSahifani yangilang, skin saytda ko'rinadi.`,
+            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_back' }]] } },
+          )
+          return NextResponse.json({ ok: true })
+        }
+
+        // Check if it's a Steam market link
+        if (text.includes('steamcommunity.com/market/listings')) {
+          const skinName = decodeURIComponent(text.split('/listings/730/')[1] || '').replace(/%20/g, ' ')
+          const parts = skinName.split(' | ')
+          const weaponType = parts.length > 1 ? parts[0].trim() : ''
+          const cleanName = parts.length > 1 ? parts[1].trim() : skinName
+          addManualSkin(cleanName, weaponType, '', '', 'https://community.akamai.steamstatic.com/economy/image/', 0)
+          await sendMessage(
+            chatId,
+            `✅ <b>Skin qo'shildi!</b>\n\n<b>${skinName}</b>\n\nSahifani yangilang, skin saytda ko'rinadi.`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_back' }]] } },
           )
           return NextResponse.json({ ok: true })
