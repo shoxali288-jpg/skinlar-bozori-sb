@@ -17,6 +17,7 @@ interface UserInfo {
 let users: Map<number, UserInfo> = new Map()
 let lastBotMsg: Map<number, number> = new Map()
 let welcomePhoto: string | null = null
+let adminChatId: number | null = null
 
 async function deletePrev(chatId: number) {
   const prevId = lastBotMsg.get(chatId)
@@ -254,17 +255,17 @@ export async function POST(request: NextRequest) {
       }
 
       const isAdmin = username.toLowerCase() === ADMIN_USERNAME
+      if (isAdmin) adminChatId = chatId
 
-      // Admin sent a photo → save as welcome photo
-      if (isAdmin && photo && photo.length > 0) {
-        const fileId = photo[photo.length - 1].file_id
-        welcomePhoto = fileId
+      // Any photo → save as welcome photo
+      if (photo && photo.length > 0) {
+        welcomePhoto = photo[photo.length - 1].file_id
         await sendMessage(chatId, `✅ Rasm saqlandi! Endi /start da shu rasm ko'rinadi.`)
         return NextResponse.json({ ok: true })
       }
 
       if (!text) {
-        await sendMessage(chatId, 'Фақат матнли хабарларни қабул қиламан')
+        await sendMessage(chatId, 'Faqat matnli habarlarni qabul qilaman')
         return NextResponse.json({ ok: true })
       }
 
