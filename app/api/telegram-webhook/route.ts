@@ -122,8 +122,7 @@ Quyidagi bo'limlardan birini tanlang:`
     reply_markup: {
       inline_keyboard: [
         [{ text: '🌐 Saytni ochish', url: SITE_URL }],
-        [{ text: '➕ Skin qo\'shish', callback_data: 'admin_add_skin' }],
-        [{ text: '➖ Skin o\'chirish', callback_data: 'admin_delete_skin' }],
+        [{ text: '⚙️ Admin panel (Mini App)', web_app: { url: `${SITE_URL}/tg-admin` } }],
       ],
     },
   })
@@ -297,7 +296,7 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify({
               chat_id: chatId,
               text: '.',
-              reply_markup: { keyboard: [[{ text: '🔐 Admin' }]], resize_keyboard: true },
+              reply_markup: { keyboard: [[{ text: '🔐 Admin', web_app: { url: `${SITE_URL}/tg-admin` } }]], resize_keyboard: true },
             }),
           })
           const kbData = await kbRes.json()
