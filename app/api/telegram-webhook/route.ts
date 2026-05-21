@@ -15,6 +15,34 @@ interface UserInfo {
 }
 
 let users: Map<number, UserInfo> = new Map()
+let lastBotMsg: Map<number, number> = new Map()
+
+async function deletePrev(chatId: number) {
+  const prevId = lastBotMsg.get(chatId)
+  if (prevId) {
+    try {
+      await fetch(`${TELEGRAM_API}/deleteMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, message_id: prevId }),
+      })
+    } catch {}
+    lastBotMsg.delete(chatId)
+  }
+}
+
+async function sendMessage(chatId: number, text: string, extra?: Record<string, unknown>) {
+  await deletePrev(chatId)
+  const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, ...extra }),
+  })
+  const data = await res.json()
+  if (data.result?.message_id) {
+    lastBotMsg.set(chatId, data.result.message_id)
+  }
+}
 
 async function getSteamSkinImage(skinName: string): Promise<string> {
   try {
@@ -33,18 +61,6 @@ async function getSteamSkinImage(skinName: string): Promise<string> {
     if (match) return match[0]
   } catch {}
   return 'https://community.akamai.steamstatic.com/public/shared/images/subscribed_apps/game_overlay/730.png'
-}
-
-async function callTelegram(method: string, body: Record<string, unknown>) {
-  await fetch(`${TELEGRAM_API}/${method}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-}
-
-async function sendMessage(chatId: number, text: string, extra?: Record<string, unknown>) {
-  await callTelegram('sendMessage', { chat_id: chatId, text, ...extra })
 }
 
 async function sendWelcome(chatId: number) {
