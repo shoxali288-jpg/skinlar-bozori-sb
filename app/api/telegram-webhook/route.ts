@@ -263,28 +263,25 @@ export async function POST(request: NextRequest) {
 
 
 
-      // /start → welcome + admin keyboard for admin
+      // /start → welcome with admin keyboard at bottom
       if (text.toLowerCase() === '/start') {
         if (isAdmin) {
-          const kbRes = await fetch(`${TELEGRAM_API}/sendMessage`, {
+          await deletePrev(chatId)
+          const res = await fetch(`${TELEGRAM_API}/sendPhoto`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
-              text: '.',
+              photo: welcomePhoto || `${SITE_URL}/api/welcome-photo`,
+              caption: `Assalomu alaykum, Admin! 🔐\n\n👉 ${SITE_URL}\n\nSkin nomini yozib qo\'shing yoki pastdagi tugmani bosing.`,
               reply_markup: { keyboard: [[{ text: '🔐 Admin', web_app: { url: `${SITE_URL}/tg-admin` } }]], resize_keyboard: true },
             }),
           })
-          const kbData = await kbRes.json()
-          if (kbData.result?.message_id) {
-            await fetch(`${TELEGRAM_API}/deleteMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: chatId, message_id: kbData.result.message_id }),
-            })
-          }
+          const data = await res.json()
+          if (data.result?.message_id) lastBotMsg.set(chatId, data.result.message_id)
+        } else {
+          await sendWelcome(chatId)
         }
-        await sendWelcome(chatId)
         return NextResponse.json({ ok: true })
       }
 
