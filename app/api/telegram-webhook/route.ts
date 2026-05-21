@@ -239,12 +239,32 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true })
       }
 
+      const isAdmin = username.toLowerCase() === ADMIN_USERNAME
+
+      // /start → welcome (for everyone)
+      if (text.toLowerCase() === '/start') {
+        if (isAdmin) {
+          // Set custom reply keyboard for admin (separate call so it persists)
+          await fetch(`${TELEGRAM_API}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: '🔐 Admin panel tugmasi qo\'shildi',
+              reply_markup: { keyboard: [[{ text: '🔐 Admin' }]], resize_keyboard: true },
+            }),
+          })
+        }
+        await sendWelcome(chatId)
+        return NextResponse.json({ ok: true })
+      }
+
       // Admin check
-      if (username.toLowerCase() === ADMIN_USERNAME) {
+      if (isAdmin) {
         const cmd = text.toLowerCase()
 
         // Commands
-        if (cmd === '/admin' || cmd === '/panel' || cmd === '🔐 admin' || cmd === '🏠 admin menu' || text === '🔙 Admin panel') {
+        if (['/admin', '/panel', '🔐 admin', '🏠 admin menu', '🔙 admin panel'].includes(cmd) || text === '🔙 Admin panel') {
           await sendAdminMenu(chatId)
           return NextResponse.json({ ok: true })
         }
