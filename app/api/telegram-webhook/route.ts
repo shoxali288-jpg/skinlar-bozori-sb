@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addManualSkin, removeManualSkin, getManualSkinsList, getManualSkins } from '@/lib/manual-skins'
+import https from 'https'
 
 const BOT_TOKEN = process.env.BOT_TOKEN || ''
 const ADMIN_USERNAME = 'shoxsvoy'
@@ -16,6 +17,26 @@ interface UserInfo {
 
 let users: Map<number, UserInfo> = new Map()
 let adminState: Map<number, { action: string; tempId?: string }> = new Map()
+
+function fetchUrl(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+      let data = ''
+      res.on('data', (chunk) => (data += chunk))
+      res.on('end', () => resolve(data))
+    }).on('error', reject)
+  })
+}
+
+async function getSteamSkinImage(skinName: string): Promise<string> {
+  try {
+    const urlName = encodeURIComponent(skinName)
+    const html = await fetchUrl(`https://steamcommunity.com/market/listings/730/${urlName}`)
+    const match = html.match(/<meta property="og:image" content="([^"]+)"/)
+    if (match) return match[1]
+  } catch {}
+  return '/placeholder.png'
+}
 
 async function callTelegram(method: string, body: Record<string, unknown>) {
   await fetch(`${TELEGRAM_API}/${method}`, {
@@ -112,7 +133,7 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       adminState.set(chatId, { action: 'awaiting_skin_name' })
       await sendMessage(
         chatId,
-        `➕ <b>Skin qo'shish</b>\n\n1️⃣ Yuboring: <b>Skin nomi</b>\n\nMasalan:\n<code>AK-47 | Redline (Field-Tested)</code>`,
+        `➕ <b>Skin qo'shish</b>\n\nSkin nomini yuboring yoki Steam Market linkini tashlang.\n\nMasalan:\n<code>AK-47 | Redline (Field-Tested)</code>\n\nRasm avtomatik topiladi.`,
         { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Bekor qilish', callback_data: 'admin_back' }]] } },
       )
       break
@@ -208,31 +229,17 @@ export async function POST(request: NextRequest) {
 
         if (state?.action === 'awaiting_skin_name') {
           const name = text.trim()
-          adminState.set(chatId, { action: 'awaiting_skin_image' })
-          const skin = addManualSkin(name, '', '', '', '', 0)
-          adminState.set(chatId, { action: 'awaiting_skin_image', tempId: skin.id })
-          await sendMessage(
-            chatId,
-            `✅ Skin nomi saqlandi: <b>${name}</b>\n\n2️⃣ Endi rasm URL yuboring (yoki 0 - rasm yo'q):`,
-            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Bekor qilish', callback_data: 'admin_back' }]] } },
-          )
-          return NextResponse.json({ ok: true })
-        }
-
-        if (state?.action === 'awaiting_skin_image') {
-          const imgUrl = text.trim()
-          const tempId = state.tempId
-          if (imgUrl !== '0') {
-            const manualList = getManualSkins()
-            const skin = manualList.find((s) => s.id === tempId)
-            if (skin) {
-              skin.image = imgUrl
-            }
-          }
+          await sendMessage(chatId, `🔍 Rasm qidirilmoqda...`)
+          
+          const imgUrl = await getSteamSkinImage(name)
+          const parts = name.split(' | ')
+          const weaponType = parts.length > 1 ? parts[0].trim() : ''
+          addManualSkin(name, weaponType, '', '', imgUrl, 0)
+          
           adminState.delete(chatId)
           await sendMessage(
             chatId,
-            `✅ <b>Skin qo'shildi!</b>\n\nSahifani yangilang, skin saytda ko'rinadi.`,
+            `✅ <b>Skin qo'shildi!</b>\n\n<b>${name}</b>\n\nSahifani yangilang, skin saytda ko'rinadi.`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_back' }]] } },
           )
           return NextResponse.json({ ok: true })
@@ -241,10 +248,13 @@ export async function POST(request: NextRequest) {
         // Check if it's a Steam market link
         if (text.includes('steamcommunity.com/market/listings')) {
           const skinName = decodeURIComponent(text.split('/listings/730/')[1] || '').replace(/%20/g, ' ')
+          await sendMessage(chatId, `🔍 Rasm qidirilmoqda...`)
+          
+          const imgUrl = await getSteamSkinImage(skinName)
           const parts = skinName.split(' | ')
           const weaponType = parts.length > 1 ? parts[0].trim() : ''
-          const cleanName = parts.length > 1 ? parts[1].trim() : skinName
-          addManualSkin(cleanName, weaponType, '', '', 'https://community.akamai.steamstatic.com/economy/image/', 0)
+          addManualSkin(skinName, weaponType, '', '', imgUrl, 0)
+          
           await sendMessage(
             chatId,
             `✅ <b>Skin qo'shildi!</b>\n\n<b>${skinName}</b>\n\nSahifani yangilang, skin saytda ko'rinadi.`,
