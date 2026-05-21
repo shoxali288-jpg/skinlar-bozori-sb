@@ -5,11 +5,49 @@ import { useCart } from '@/lib/cart-context';
 import type { Skin } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-export function SkinDetailClient({ skin }: { skin: Skin }) {
+export function SkinDetailClient({ params }: { params: { id: string } }) {
   const { addToCart } = useCart();
-  const onAdd = useCallback(() => addToCart(skin, 1), [addToCart, skin]);
+  const [skin, setSkin] = useState<Skin | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/catalog')
+      .then((r) => r.json())
+      .then((data: Skin[]) => {
+        const found = data.find((s) => s.id === params.id)
+        setSkin(found || null)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [params.id])
+
+  const onAdd = useCallback(() => {
+    if (skin) addToCart(skin, 1)
+  }, [addToCart, skin]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+      </div>
+    );
+  }
+
+  if (!skin) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+        <p className="text-lg text-white/60">Skin topilmadi</p>
+        <Link
+          href="/marketplace"
+          className="rounded-2xl bg-white/10 px-5 py-3 text-sm text-white/80 transition hover:bg-white/15"
+        >
+          Bozorga qaytish
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -68,7 +106,7 @@ export function SkinDetailClient({ skin }: { skin: Skin }) {
             {([
               { k: 'Holat', v: skin.condition, mono: false },
               { k: 'Float', v: skin.float.toFixed(6), mono: true },
-              { k: 'Narx', v: 'Admin bilan bog&apos;laning', mono: false },
+              { k: 'Narx', v: "Admin bilan bog'lanishing", mono: false },
               { k: 'Mavjudlik', v: skin.available ? 'Ha' : 'Cheklangan', mono: false },
             ] as { k: string; v: string; mono: boolean }[]).map((row) => (
               <div key={row.k} className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/5">

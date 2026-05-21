@@ -58,7 +58,12 @@ async function getSteamSkinImage(skinName: string): Promise<string> {
     )
     const html = await res.text()
     const match = html.match(/https:\/\/community\.steamstatic\.com\/economy\/image\/[^"']+/)
-    if (match) return match[0]
+    if (match) {
+      // Ensure size suffix for Steam economy CDN
+      let url = match[0].replace('community.steamstatic.com', 'community.akamai.steamstatic.com')
+      if (!url.match(/\/\d+[fx]+\d+[fx]*$/)) url += '/62fx62f'
+      return url
+    }
   } catch {}
   return 'https://community.akamai.steamstatic.com/public/shared/images/subscribed_apps/game_overlay/730.png'
 }
