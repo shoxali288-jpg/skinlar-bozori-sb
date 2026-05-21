@@ -263,10 +263,9 @@ export async function POST(request: NextRequest) {
 
 
 
-      // /start → welcome for users, admin menu for admin
+      // /start → welcome + admin keyboard for admin
       if (text.toLowerCase() === '/start') {
         if (isAdmin) {
-          // Set custom keyboard with Admin Mini App
           const kbRes = await fetch(`${TELEGRAM_API}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -284,10 +283,8 @@ export async function POST(request: NextRequest) {
               body: JSON.stringify({ chat_id: chatId, message_id: kbData.result.message_id }),
             })
           }
-          await sendAdminMenu(chatId)
-        } else {
-          await sendWelcome(chatId)
         }
+        await sendWelcome(chatId)
         return NextResponse.json({ ok: true })
       }
 
