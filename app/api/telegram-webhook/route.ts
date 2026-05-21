@@ -16,7 +16,6 @@ interface UserInfo {
 }
 
 let users: Map<number, UserInfo> = new Map()
-let adminState: Map<number, { action: string; tempId?: string }> = new Map()
 
 function fetchUrl(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -130,7 +129,6 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       break
     }
     case 'admin_add_skin': {
-      adminState.set(chatId, { action: 'awaiting_skin_name' })
       await sendMessage(
         chatId,
         `➕ <b>Skin qo'shish</b>\n\nSkin nomini yuboring yoki Steam Market linkini tashlang.\n\nMasalan:\n<code>AK-47 | Redline (Field-Tested)</code>\n\nRasm avtomatik topiladi.`,
@@ -166,7 +164,6 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       break
     }
     case 'admin_back':
-      adminState.delete(chatId)
       await sendAdminMenu(chatId)
       break
     default: {
@@ -225,27 +222,15 @@ export async function POST(request: NextRequest) {
 
       // Admin check
       if (username.toLowerCase() === ADMIN_USERNAME) {
-        const state = adminState.get(chatId)
+        const cmd = text.toLowerCase()
 
-        if (state?.action === 'awaiting_skin_name') {
-          const name = text.trim()
-          await sendMessage(chatId, `🔍 Rasm qidirilmoqda...`)
-          
-          const imgUrl = await getSteamSkinImage(name)
-          const parts = name.split(' | ')
-          const weaponType = parts.length > 1 ? parts[0].trim() : ''
-          addManualSkin(name, weaponType, '', '', imgUrl, 0)
-          
-          adminState.delete(chatId)
-          await sendMessage(
-            chatId,
-            `✅ <b>Skin qo'shildi!</b>\n\n<b>${name}</b>\n\nSahifani yangilang, skin saytda ko'rinadi.`,
-            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_back' }]] } },
-          )
+        // Commands
+        if (cmd === '/admin' || cmd === '/panel' || cmd === '🔐 admin' || cmd === '🏠 admin menu' || text === '🔙 Admin panel') {
+          await sendAdminMenu(chatId)
           return NextResponse.json({ ok: true })
         }
 
-        // Check if it's a Steam market link
+        // Steam market link → extract name and add
         if (text.includes('steamcommunity.com/market/listings')) {
           const skinName = decodeURIComponent(text.split('/listings/730/')[1] || '').replace(/%20/g, ' ')
           await sendMessage(chatId, `🔍 Rasm qidirilmoqda...`)
@@ -263,16 +248,19 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ ok: true })
         }
 
-        const cmd = text.toLowerCase()
-        switch (cmd) {
-          case '/admin':
-          case '/panel':
-          case '🔐 admin':
-            await sendAdminMenu(chatId)
-            break
-          default:
-            await sendAdminMenu(chatId)
-        }
+        // Any other text → treat as skin name to add
+        await sendMessage(chatId, `🔍 Rasm qidirilmoqda...`)
+        const name = text.trim()
+        const imgUrl = await getSteamSkinImage(name)
+        const parts = name.split(' | ')
+        const weaponType = parts.length > 1 ? parts[0].trim() : ''
+        addManualSkin(name, weaponType, '', '', imgUrl, 0)
+        
+        await sendMessage(
+          chatId,
+          `✅ <b>Skin qo'shildi!</b>\n\n<b>${name}</b>\n\nSahifani yangilang, skin saytda ko'rinadi.`,
+          { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_back' }]] } },
+        )
         return NextResponse.json({ ok: true })
       }
 
