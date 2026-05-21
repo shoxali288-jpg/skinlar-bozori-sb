@@ -69,7 +69,7 @@ async function getSteamSkinImage(skinName: string): Promise<string> {
   return 'https://community.akamai.steamstatic.com/public/shared/images/subscribed_apps/game_overlay/730.png'
 }
 
-async function sendWelcome(chatId: number, noPhoto?: boolean) {
+async function sendWelcome(chatId: number, noPhoto?: boolean, admin?: boolean) {
   const text = `Assalomu alaykum.
 
 Skinlar Bozori'ga xush kelibsiz 🔥
@@ -83,10 +83,14 @@ Bu yerda siz:
 
 🚀 Tezkor • Ishonchli • Premium`
 
+  const extra: Record<string, unknown> = {
+    reply_markup: admin
+      ? { keyboard: [[{ text: '🔐 Admin' }]], resize_keyboard: true }
+      : { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
+  }
+
   if (noPhoto) {
-    await sendMessage(chatId, text, {
-      reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
-    })
+    await sendMessage(chatId, text, extra)
     return
   }
 
@@ -99,7 +103,7 @@ Bu yerda siz:
       photo: welcomePhoto || 'https://skinlar-bozori-sb.vercel.app/logo.jpg',
       caption: text,
       parse_mode: 'HTML',
-      reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
+      ...extra,
     }),
   })
   const data = await res.json()
@@ -272,19 +276,7 @@ export async function POST(request: NextRequest) {
 
       // /start → welcome (for everyone)
       if (text.toLowerCase() === '/start') {
-        if (isAdmin) {
-          // Set custom reply keyboard for admin (separate call so it persists)
-          await fetch(`${TELEGRAM_API}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: '🔐 Admin panel tugmasi qo\'shildi',
-              reply_markup: { keyboard: [[{ text: '🔐 Admin' }]], resize_keyboard: true },
-            }),
-          })
-        }
-        await sendWelcome(chatId)
+        await sendWelcome(chatId, undefined, isAdmin)
         return NextResponse.json({ ok: true })
       }
 
