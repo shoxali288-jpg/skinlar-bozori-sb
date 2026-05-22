@@ -19,7 +19,7 @@ function getUniqueSkins(skins: Awaited<ReturnType<typeof getAllSkins>>, count: n
 
 export default async function HomePage() {
   const skins = await getAllSkins();
-  const featured = getUniqueSkins(skins, Math.min(8, skins.length));
+  const featured = getUniqueSkins(skins, Math.min(3, skins.length));
 
   return (
     <div className="space-y-14">
@@ -50,8 +50,8 @@ export default async function HomePage() {
             <h2 className="text-xl font-bold text-white sm:text-2xl">Mening skinlarim</h2>
             <p className="text-sm text-white/55">
               {skins.length > 0
-                ? `${skins.length} ta skin — Steam inventaringiz`
-                : 'Steam inventar yuklanmoqda...'}
+                ? `${skins.length} ta skin`
+                : 'Skinlar yuklanmoqda...'}
             </p>
           </div>
           <Link href="/marketplace" className="text-sm font-semibold text-neon-bright hover:underline">
@@ -60,10 +60,10 @@ export default async function HomePage() {
         </div>
         {skins.length === 0 ? (
           <div className="rounded-3xl border border-white/10 bg-surface/40 p-10 text-center text-white/45">
-            Steam inventar bo‘sh yoki yuklanmadi.
+            Skinlar mavjud emas.
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((s) => (
               <SkinCard key={s.id} skin={s} />
             ))}
