@@ -28,6 +28,9 @@ export default function AdminPage() {
   const [addName, setAddName] = useState('')
   const [addImage, setAddImage] = useState('')
   const [addPreview, setAddPreview] = useState('')
+  const [addWeapon, setAddWeapon] = useState('')
+  const [addRarity, setAddRarity] = useState('')
+  const [addCondition, setAddCondition] = useState('')
 
   // Edit
   const [editSkin, setEditSkin] = useState<AdminSkin | null>(null)
@@ -63,6 +66,9 @@ export default function AdminPage() {
       if (data.ok && data.image) {
         setAddImage(data.image)
         setAddPreview(data.image)
+        setAddWeapon(data.weaponType || '')
+        setAddRarity(data.rarity || '')
+        setAddCondition(data.condition || '')
       } else {
         setError('Rasm topilmadi. Skin nomini tekshiring.')
       }
@@ -92,6 +98,9 @@ export default function AdminPage() {
       setAddName('')
       setAddImage('')
       setAddPreview('')
+      setAddWeapon('')
+      setAddRarity('')
+      setAddCondition('')
       setError('')
       setTab('list')
       load()
@@ -207,6 +216,22 @@ export default function AdminPage() {
                   <Image src={addPreview} alt="Preview" fill className="object-contain" />
                 </div>
                 <p className="mt-2 text-xs text-white/50">Rasm topildi</p>
+                {(addWeapon || addRarity || addCondition) && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="rounded-lg border border-white/5 bg-black/40 p-2">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Weapon</p>
+                      <p className="mt-0.5 text-xs font-medium text-white">{addWeapon || '-'}</p>
+                    </div>
+                    <div className="rounded-lg border border-white/5 bg-black/40 p-2">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Rarity</p>
+                      <p className="mt-0.5 text-xs font-medium text-[#a855f7]">{addRarity || '-'}</p>
+                    </div>
+                    <div className="rounded-lg border border-white/5 bg-black/40 p-2">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Condition</p>
+                      <p className="mt-0.5 text-xs font-medium text-white">{addCondition || '-'}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
