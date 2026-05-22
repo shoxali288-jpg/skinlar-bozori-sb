@@ -26,6 +26,7 @@ export default function AdminPage() {
 
   // Add form
   const [addName, setAddName] = useState('')
+  const [addImageUrl, setAddImageUrl] = useState('')
 
   // Edit
   const [editSkin, setEditSkin] = useState<AdminSkin | null>(null)
@@ -58,12 +59,14 @@ export default function AdminPage() {
       body: JSON.stringify({
         action: 'add',
         name: addName,
+        image: addImageUrl,
       }),
     })
     const data = await res.json()
     setLoading(false)
     if (data.ok) {
       setAddName('')
+      setAddImageUrl('')
       setError('')
       setTab('list')
       load()
@@ -165,7 +168,14 @@ export default function AdminPage() {
                 style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.1)' }}
                 onKeyDown={(e) => e.key === 'Enter' && addSkin()}
               />
-              <p className="mt-1.5 text-[11px] text-white/30">Nomi kiriting va &quot;Saqlash&quot; tugmasini bosing. Rasm va ma&apos;lumotlar avtomatik topiladi.</p>
+            </div>
+            <div>
+              <label className="text-xs text-white/50 uppercase tracking-wider">Rasm URL</label>
+              <input value={addImageUrl} onChange={(e) => setAddImageUrl(e.target.value)}
+                placeholder="https://steamcommunity.com/economy/image/..."
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50 transition"
+                style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.1)' }}
+              />
             </div>
 
             <div className="flex gap-3">
