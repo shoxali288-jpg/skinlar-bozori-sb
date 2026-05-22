@@ -5,7 +5,6 @@ const BOT_TOKEN = process.env.BOT_TOKEN || ''
 const ADMIN_ID = 6474297315
 const SITE_URL = process.env.SITE_URL || process.env.APP_URL || 'https://skinlar-bozori-sb.vercel.app'
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
-const UZS_PER_USD = 12800
 
 async function callTelegram(method: string, body: Record<string, unknown>) {
   const res = await fetch(`${TELEGRAM_API}/${method}`, {
@@ -129,7 +128,7 @@ export async function POST(request: NextRequest) {
           })
         } else {
           const lines = skins.map((s, i) =>
-            `${i + 1}. <b>${s.name}</b>\n   ID: ${s.id} | ${s.priceUsd.toLocaleString()} so'm | ${s.available ? 'Mavjud' : 'Yashirin'}`
+            `${i + 1}. <b>${s.name}</b>\n   ID: ${s.id} | ${s.priceUsd > 0 ? `${s.priceUsd.toLocaleString()} so'm` : 'Admin bilan bog\'laning'} | ${s.available ? 'Mavjud' : 'Yashirin'}`
           ).join('\n\n')
           await send(chatId, `📋 <b>Skinlar (${skins.length})</b>\n\n${lines}`, {
             parse_mode: 'HTML',
@@ -211,9 +210,6 @@ export async function POST(request: NextRequest) {
           }
 
           const info = parseSkinName(parsed.name)
-          const usdPrice = Math.round(Math.random() * 200 + 10)
-          const uzsPrice = usdPrice * UZS_PER_USD
-
           addCustomSkin({
             name: parsed.name,
             image: parsed.image,
@@ -223,7 +219,7 @@ export async function POST(request: NextRequest) {
             condition: info.condition,
             float: Math.round(Math.random() * 100) / 100,
             stattrak: info.stattrak,
-            priceUsd: uzsPrice,
+            priceUsd: 0,
             available: true,
           })
 
@@ -233,7 +229,7 @@ export async function POST(request: NextRequest) {
             `🔫 ${info.weaponType}\n` +
             `💎 ${info.rarity}` +
             (info.condition ? `\n📦 ${info.condition}` : '') +
-            `\n💵 ${uzsPrice.toLocaleString()} so'm`,
+            `\n💵 Admin bilan bog'laning`,
             {
               parse_mode: 'HTML',
               reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_menu' }]] },

@@ -26,7 +26,6 @@ export default function AdminPage() {
 
   // Add form
   const [addName, setAddName] = useState('')
-  const [addPrice, setAddPrice] = useState('')
   const [addImage, setAddImage] = useState('')
   const [addPreview, setAddPreview] = useState('')
   const [addCondition, setAddCondition] = useState('')
@@ -90,7 +89,6 @@ export default function AdminPage() {
       body: JSON.stringify({
         action: 'add',
         name: addName,
-        price: addPrice,
         image: addImage,
         condition: addCondition,
         rarity: addRarity,
@@ -101,7 +99,6 @@ export default function AdminPage() {
     setLoading(false)
     if (data.ok) {
       setAddName('')
-      setAddPrice('')
       setAddImage('')
       setAddPreview('')
       setAddCondition('')
@@ -200,23 +197,13 @@ export default function AdminPage() {
         {/* ADD TAB */}
         {tab === 'add' && (
           <div className="space-y-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-xs text-white/50 uppercase tracking-wider">Skin nomi</label>
-                <input value={addName} onChange={(e) => setAddName(e.target.value)}
-                  placeholder="M: AK-47 | Redline"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50 transition"
-                  style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.1)' }}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-white/50 uppercase tracking-wider">Narx (USD)</label>
-                <input value={addPrice} onChange={(e) => setAddPrice(e.target.value)}
-                  placeholder="M: 150"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50 transition"
-                  style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.1)' }}
-                />
-              </div>
+            <div>
+              <label className="text-xs text-white/50 uppercase tracking-wider">Skin nomi</label>
+              <input value={addName} onChange={(e) => setAddName(e.target.value)}
+                placeholder="M: AK-47 | Redline"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50 transition"
+                style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.1)' }}
+              />
             </div>
 
             <button onClick={fetchImage} disabled={loading || !addName.trim()}
@@ -324,7 +311,7 @@ export default function AdminPage() {
                         <span>{s.weaponType}</span>
                         <span className="text-[#a855f7]">{s.rarity}</span>
                         {s.condition && <span>{s.condition}</span>}
-                        <span>{s.priceUsd.toLocaleString()} so&apos;m</span>
+                        <span>{s.priceUsd > 0 ? `${s.priceUsd.toLocaleString()} so'm` : 'Admin bilan bog\'laning'}</span>
                         {s.stattrak && <span className="text-orange-400">StatTrak</span>}
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">

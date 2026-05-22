@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addCustomSkin, removeCustomSkin, getCustomSkins, getCustomSkinById, updateSkinPrice, updateSkinImage, updateSkinAvailable, searchCustomSkins } from '@/lib/store'
 
-const UZS_PER_USD = 12800
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -14,7 +12,7 @@ export async function POST(request: NextRequest) {
         if (!parsed || !parsed.image) {
           return NextResponse.json({ ok: false, error: 'Rasm topilmadi. Skin nomini tekshiring.' })
         }
-        const priceUsd = (body.price ? parseInt(body.price) : Math.round(Math.random() * 200 + 10)) * UZS_PER_USD
+        const priceUsd = 0
         const info = parseSkinMeta(parsed.name)
         const skin = addCustomSkin({
           name: parsed.name,
@@ -41,7 +39,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'update_price': {
-        const ok = updateSkinPrice(body.id, parseInt(body.price) * UZS_PER_USD)
+        const ok = updateSkinPrice(body.id, parseInt(body.price))
         return NextResponse.json({ ok })
       }
 
