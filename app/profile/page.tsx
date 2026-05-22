@@ -43,7 +43,7 @@ export default function ProfilePage() {
 
       <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-card/50 p-6 shadow-innerGlow">
         <Image
-          src="/logo.jpg"
+          src="/site-logo.jpg"
           alt="Skinlar Bozori SB"
           width={72}
           height={72}

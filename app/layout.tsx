@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   description:
     'CS2 skinlari uchun premium bozor: qidiruv, filtrlar, savat va buyurtmalar. Skinlar Bozori SB.',
   icons: {
-    icon: '/logo.jpg',
-    apple: '/logo.jpg',
+    icon: '/site-logo.jpg',
+    apple: '/site-logo.jpg',
   },
   openGraph: {
     title: 'Skinlar Bozori SB',

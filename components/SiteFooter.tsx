@@ -7,7 +7,7 @@ export function SiteFooter() {
         <div className="flex max-w-md flex-col gap-4">
           <Link href="/" className="flex items-center gap-3">
             <img
-              src="/logo.jpg"
+              src="/site-logo.jpg"
               alt="Skinlar Bozori SB"
               width={56}
               height={56}

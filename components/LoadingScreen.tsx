@@ -23,7 +23,7 @@ export function LoadingScreen({ onDone }: { onDone: () => void }) {
       <div className="relative">
         <div className="absolute inset-0 animate-pulseGlow rounded-full bg-neon/20 blur-2xl" />
         <img
-          src="/logo.jpg"
+          src="/site-logo.jpg"
           alt="Skinlar Bozori SB"
           width={120}
           height={120}

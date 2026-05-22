@@ -64,7 +64,7 @@ export default function TgAdmin() {
   return (
     <div className="mx-auto min-h-screen max-w-md bg-gray-950 p-4 text-white">
       <div className="mb-6 flex items-center gap-3">
-        <img src="/logo.jpg" alt="logo" className="h-10 w-10 rounded-full object-cover" />
+        <img src="/site-logo.jpg" alt="logo" className="h-10 w-10 rounded-full object-cover" />
         <h1 className="text-lg font-bold tracking-wide">Admin Panel</h1>
       </div>
 
