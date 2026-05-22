@@ -1,53 +1,17 @@
 'use client';
 
 import { SkinImageViewport } from '@/components/SkinImageViewport';
+import { useBuyModal } from '@/lib/buy-modal-context';
 import { useCart } from '@/lib/cart-context';
 import type { Skin } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
-export function SkinDetailClient({ params }: { params: { id: string } }) {
+export function SkinDetailClient({ skin }: { skin: Skin }) {
   const { addToCart } = useCart();
-  const [skin, setSkin] = useState<Skin | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/catalog')
-      .then((r) => r.json())
-      .then((data: Skin[]) => {
-        const found = data.find((s) => s.id === params.id)
-        setSkin(found || null)
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
-  }, [params.id])
-
-  const onAdd = useCallback(() => {
-    if (skin) addToCart(skin, 1)
-  }, [addToCart, skin]);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-      </div>
-    );
-  }
-
-  if (!skin) {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
-        <p className="text-lg text-white/60">Skin topilmadi</p>
-        <Link
-          href="/marketplace"
-          className="rounded-2xl bg-white/10 px-5 py-3 text-sm text-white/80 transition hover:bg-white/15"
-        >
-          Bozorga qaytish
-        </Link>
-      </div>
-    );
-  }
+  const { openBuyModal } = useBuyModal();
+  const onAdd = useCallback(() => addToCart(skin, 1), [addToCart, skin]);
 
   return (
     <div className="space-y-8">
@@ -106,7 +70,7 @@ export function SkinDetailClient({ params }: { params: { id: string } }) {
             {([
               { k: 'Holat', v: skin.condition, mono: false },
               { k: 'Float', v: skin.float.toFixed(6), mono: true },
-              { k: 'Narx', v: "Admin bilan bog'lanishing", mono: false },
+              { k: 'Narx', v: 'Admin bilan bog&apos;laning', mono: false },
               { k: 'Mavjudlik', v: skin.available ? 'Ha' : 'Cheklangan', mono: false },
             ] as { k: string; v: string; mono: boolean }[]).map((row) => (
               <div key={row.k} className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/5">
@@ -121,15 +85,14 @@ export function SkinDetailClient({ params }: { params: { id: string } }) {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <a
-              href="https://t.me/shoxsvoy"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={openBuyModal}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-neon-dim to-neon px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 active:scale-[0.99]"
             >
               <span aria-hidden>🛒</span>
-              Admin TG
-            </a>
+              Sotib olish
+            </button>
             <button
               type="button"
               onClick={onAdd}

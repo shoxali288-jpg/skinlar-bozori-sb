@@ -96,15 +96,14 @@ export function SkinCard({ skin }: { skin: Skin }) {
         </div>
 
         <div className="mt-auto flex flex-col gap-2 pt-1">
-          <a
-            href="https://t.me/shoxsvoy"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={onBuy}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neon-dim to-neon px-3 py-2.5 text-sm font-semibold text-white shadow-glow-sm transition hover:brightness-110 active:scale-[0.99]"
           >
             <span aria-hidden>🛒</span>
-            Admin TG
-          </a>
+            Sotib olish
+          </button>
           <button
             type="button"
             onClick={onAddCart}
