@@ -49,7 +49,17 @@ async function sendWelcome(chatId: number, fromId: number) {
   if (fromId === ADMIN_ID) {
     buttons.push([{ text: '⚙&#xFE0F; Admin Panel', url: `${SITE_URL}/admin` }])
   }
-  await send(chatId, WELCOME, { reply_markup: { inline_keyboard: buttons } })
+  await deletePrev(chatId)
+  const res = await callTelegram('sendPhoto', {
+    chat_id: chatId,
+    photo: `${SITE_URL}/api/welcome-photo`,
+    caption: WELCOME,
+    parse_mode: 'HTML',
+    reply_markup: { inline_keyboard: buttons },
+  })
+  if (res.result?.message_id) {
+    lastBotMsg.set(chatId, res.result.message_id)
+  }
 }
 
 async function parseMarketLink(link: string): Promise<{ name: string; image: string }> {
