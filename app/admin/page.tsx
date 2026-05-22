@@ -26,11 +26,6 @@ export default function AdminPage() {
 
   // Add form
   const [addName, setAddName] = useState('')
-  const [addImage, setAddImage] = useState('')
-  const [addPreview, setAddPreview] = useState('')
-  const [addWeapon, setAddWeapon] = useState('')
-  const [addRarity, setAddRarity] = useState('')
-  const [addCondition, setAddCondition] = useState('')
 
   // Edit
   const [editSkin, setEditSkin] = useState<AdminSkin | null>(null)
@@ -51,58 +46,24 @@ export default function AdminPage() {
     document.title = 'Admin Panel — SB'
   }, [])
 
-  const fetchImage = async () => {
-    if (!addName.trim()) return
-    setLoading(true)
-    setError('')
-    setAddImage('')
-    setAddPreview('')
-    try {
-      const res = await fetch('/api/admin', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'fetch_image', name: addName }),
-      })
-      const data = await res.json()
-      if (data.ok) {
-        if (data.image) {
-          setAddImage(data.image)
-          setAddPreview(data.image)
-        }
-        setAddWeapon(data.weaponType || '')
-        setAddRarity(data.rarity || '')
-        setAddCondition(data.condition || '')
-      } else {
-        setError('Skin topilmadi. Nomni tekshiring.')
-      }
-    } catch {
-      setError('Xatolik yuz berdi.')
-    }
-    setLoading(false)
-  }
-
   const addSkin = async () => {
     if (!addName.trim()) {
       setError('Skin nomini kiriting')
       return
     }
     setLoading(true)
+    setError('')
     const res = await fetch('/api/admin', {
       method: 'POST',
       body: JSON.stringify({
         action: 'add',
         name: addName,
-        image: addImage,
       }),
     })
     const data = await res.json()
     setLoading(false)
     if (data.ok) {
       setAddName('')
-      setAddImage('')
-      setAddPreview('')
-      setAddWeapon('')
-      setAddRarity('')
-      setAddCondition('')
       setError('')
       setTab('list')
       load()
@@ -199,52 +160,16 @@ export default function AdminPage() {
             <div>
               <label className="text-xs text-white/50 uppercase tracking-wider">Skin nomi</label>
               <input value={addName} onChange={(e) => setAddName(e.target.value)}
-                placeholder="M: AK-47 | Redline"
+                placeholder="M: AK-47 | Redline (Field-Tested)"
                 className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50 transition"
                 style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.1)' }}
+                onKeyDown={(e) => e.key === 'Enter' && addSkin()}
               />
+              <p className="mt-1.5 text-[11px] text-white/30">Nomi kiriting va &quot;Saqlash&quot; tugmasini bosing. Rasm va ma&apos;lumotlar avtomatik topiladi.</p>
             </div>
 
-            <button onClick={fetchImage} disabled={loading || !addName.trim()}
-              className="w-full rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#a855f7] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
-              style={{ boxShadow: '0 0 20px rgba(168,85,247,0.3)' }}>
-              {loading ? 'Yuklanmoqda...' : '🔍 Rasmni topish'}
-            </button>
-
-            {(addPreview || addWeapon || addRarity) && (
-              <div className="rounded-xl border border-[#a855f7]/20 bg-black/40 p-4 text-center"
-                style={{ boxShadow: '0 0 15px rgba(168,85,247,0.1)' }}>
-                {addPreview ? (
-                  <div className="relative w-full h-40 mx-auto max-w-[300px]">
-                    <Image src={addPreview} alt="Preview" fill className="object-contain" />
-                  </div>
-                ) : (
-                  <div className="w-full h-20 mx-auto max-w-[300px] flex items-center justify-center">
-                    <span className="text-xs text-white/30">Rasm mavjud emas</span>
-                  </div>
-                )}
-                <p className="mt-2 text-xs text-white/50">{addPreview ? 'Rasm topildi' : 'Rasm topilmadi, skin baribir saqlanadi'}</p>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="rounded-lg border border-white/5 bg-black/40 p-2">
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider">Weapon</p>
-                    <p className="mt-0.5 text-xs font-medium text-white">{addWeapon || '-'}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/5 bg-black/40 p-2">
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider">Rarity</p>
-                    <p className="mt-0.5 text-xs font-medium text-[#a855f7]">{addRarity || '-'}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/5 bg-black/40 p-2">
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider">Condition</p>
-                    <p className="mt-0.5 text-xs font-medium text-white">{addCondition || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-
-
             <div className="flex gap-3">
-              <button onClick={addSkin} disabled={loading || !addImage}
+              <button onClick={addSkin} disabled={loading || !addName.trim()}
                 className="flex-1 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#a855f7] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
                 style={{ boxShadow: '0 0 20px rgba(168,85,247,0.3)' }}>
                 {loading ? 'Saqlanmoqda...' : '💾 Skin saqlash'}
