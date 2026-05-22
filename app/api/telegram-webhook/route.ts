@@ -52,11 +52,11 @@ async function sendWelcome(chatId: number, fromId: number) {
   await send(chatId, WELCOME, { reply_markup: { inline_keyboard: buttons } })
 }
 
-async function parseMarketLink(link: string): Promise<{ name: string; image: string } | null> {
+async function parseMarketLink(link: string): Promise<{ name: string; image: string }> {
   try {
     const decoded = decodeURIComponent(link)
     const name = decoded.split('/listings/730/')[1]?.split('?')[0]?.replace(/\+/g, ' ') || ''
-    if (!name) return null
+    if (!name) return { name: link, image: '' }
 
     const res = await fetch(`https://steamcommunity.com/market/listings/730/${encodeURIComponent(name)}`, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -74,11 +74,10 @@ async function parseMarketLink(link: string): Promise<{ name: string; image: str
       else if (src.includes('economy/image')) image = `https://community.akamai.steamstatic.com/economy/image/${src.replace('economy/image/', '')}`
       else image = `https://community.akamai.steamstatic.com/economy/image/${src}`
     }
-    if (!image) return null
 
     return { name, image }
   } catch {
-    return null
+    return { name: link, image: '' }
   }
 }
 
@@ -202,13 +201,6 @@ export async function POST(request: NextRequest) {
           await send(chatId, '⏳ Skin ma\'lumotlari yuklanmoqda...')
 
           const parsed = await parseMarketLink(text)
-          if (!parsed) {
-            await send(chatId, '❌ Rasm topilmadi. Skin nomini tekshiring.', {
-              reply_markup: { inline_keyboard: [[{ text: '🔙 Admin panel', callback_data: 'admin_menu' }]] },
-            })
-            return NextResponse.json({ ok: true })
-          }
-
           const info = parseSkinName(parsed.name)
           addCustomSkin({
             name: parsed.name,

@@ -8,31 +8,32 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'add': {
-        const parsed = await parseSkinNameFromWeb(body.name)
-        if (!parsed || !parsed.image) {
-          return NextResponse.json({ ok: false, error: 'Rasm topilmadi. Skin nomini tekshiring.' })
-        }
-        const priceUsd = 0
-        const info = parseSkinMeta(parsed.name)
+        const inputName = body.name || ''
+        const info = parseSkinMeta(inputName)
+        const parsed = await parseSkinNameFromWeb(inputName).catch(() => null)
+        const name = parsed?.name || inputName
+        const image = parsed?.image || body.image || ''
         const skin = addCustomSkin({
-          name: parsed.name,
-          image: parsed.image,
-          weaponType: body.weaponType || info.weaponType,
-          rarity: body.rarity || info.rarity,
-          rarityKey: (body.rarity || info.rarity).toLowerCase(),
-          condition: body.condition || info.condition,
-          float: body.float ? parseFloat(body.float) : Math.round(Math.random() * 100) / 100,
+          name,
+          image,
+          weaponType: info.weaponType,
+          rarity: info.rarity,
+          rarityKey: info.rarity.toLowerCase(),
+          condition: info.condition,
+          float: parseFloat(body.float) || Math.round(Math.random() * 100) / 100,
           stattrak: info.stattrak,
-          priceUsd,
+          priceUsd: 0,
           available: true,
         })
         return NextResponse.json({ ok: true, skin })
       }
 
       case 'fetch_image': {
-        const parsed = await parseSkinNameFromWeb(body.name)
+        const inputName = body.name || ''
+        const parsed = await parseSkinNameFromWeb(inputName).catch(() => null)
         if (!parsed || !parsed.image) {
-          return NextResponse.json({ ok: false, error: 'Rasm topilmadi. Skin nomini tekshiring.' })
+          const info = parseSkinMeta(inputName)
+          return NextResponse.json({ ok: true, name: inputName, image: '', ...info })
         }
         const info = parseSkinMeta(parsed.name)
         return NextResponse.json({ ok: true, name: parsed.name, image: parsed.image, ...info })
