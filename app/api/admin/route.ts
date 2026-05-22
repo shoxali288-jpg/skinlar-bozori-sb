@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       case 'add': {
         const inputName = body.name || ''
         const info = parseSkinMeta(inputName)
-        const skin = addCustomSkin({
+        const skin = await addCustomSkin({
           name: inputName,
           image: body.image || '',
           weaponType: info.weaponType,
@@ -26,35 +26,35 @@ export async function POST(request: NextRequest) {
       }
 
       case 'update_price': {
-        const ok = updateSkinPrice(body.id, parseInt(body.price))
+        const ok = await updateSkinPrice(body.id, parseInt(body.price))
         return NextResponse.json({ ok })
       }
 
       case 'update_image': {
-        const ok = updateSkinImage(body.id, body.image)
+        const ok = await updateSkinImage(body.id, body.image)
         return NextResponse.json({ ok })
       }
 
       case 'toggle_available': {
-        const skin = getCustomSkinById(body.id)
+        const skin = await getCustomSkinById(body.id)
         if (!skin) return NextResponse.json({ ok: false })
-        const ok = updateSkinAvailable(body.id, !skin.available)
+        const ok = await updateSkinAvailable(body.id, !skin.available)
         return NextResponse.json({ ok, available: !skin.available })
       }
 
       case 'delete': {
-        const ok = removeCustomSkin(body.id)
+        const ok = await removeCustomSkin(body.id)
         return NextResponse.json({ ok })
       }
 
       case 'search': {
         const q = body.query || ''
-        const skins = searchCustomSkins(q)
+        const skins = await searchCustomSkins(q)
         return NextResponse.json({ ok: true, skins })
       }
 
       case 'list': {
-        const skins = getCustomSkins()
+        const skins = await getCustomSkins()
         return NextResponse.json({ ok: true, skins })
       }
 

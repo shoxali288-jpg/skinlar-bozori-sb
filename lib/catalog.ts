@@ -2,7 +2,7 @@ import type { Skin } from '@/lib/types';
 import { getCustomSkins } from '@/lib/store';
 
 export async function getAllSkins(): Promise<Skin[]> {
-  return getCustomSkins();
+  return await getCustomSkins();
 }
 
 export async function getSkinById(id: string): Promise<Skin | undefined> {

@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (data === 'list_skins') {
-        const skins = getCustomSkins()
+        const skins = await getCustomSkins()
         if (skins.length === 0) {
           await send(chatId, '📋 Hali qo\'shilgan skinlar yo\'q.', {
             reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_menu' }]] },
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (data === 'del_skin_list') {
-        const skins = getCustomSkins()
+        const skins = await getCustomSkins()
         if (skins.length === 0) {
           await send(chatId, '🗑 O\'chirish uchun skinlar yo\'q.', {
             reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_menu' }]] },
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
 
       if (data.startsWith('del_skin_')) {
         const skinId = data.replace('del_skin_', '')
-        const removed = removeCustomSkin(skinId)
+        const removed = await removeCustomSkin(skinId)
         await send(chatId, removed ? '✅ Skin o\'chirildi!' : '❌ Skin topilmadi.', {
           reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_menu' }]] },
         })
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
 
           const parsed = await parseMarketLink(text)
           const info = parseSkinName(parsed.name)
-          addCustomSkin({
+          await addCustomSkin({
             name: parsed.name,
             image: parsed.image,
             weaponType: info.weaponType,
