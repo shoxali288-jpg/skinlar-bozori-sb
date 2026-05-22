@@ -26,15 +26,19 @@ export function SkinDetailClient({ skin }: { skin: Skin }) {
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent p-6 shadow-innerGlow sm:p-8">
           <SkinImageViewport className="mx-auto w-full max-w-[420px] shadow-glow">
-            <div className="relative aspect-square w-full">
-              <Image
-                src={skin.image}
-                alt={skin.name}
-                fill
-                priority
-                sizes="(max-width:1024px) 100vw, 420px"
-                className="object-contain object-center drop-shadow-2xl"
-              />
+            <div className="relative flex aspect-square w-full items-center justify-center">
+              {skin.image ? (
+                <Image
+                  src={skin.image}
+                  alt={skin.name}
+                  fill
+                  priority
+                  sizes="(max-width:1024px) 100vw, 420px"
+                  className="object-contain object-center drop-shadow-2xl"
+                />
+              ) : (
+                <span className="text-6xl text-white/10">?</span>
+              )}
             </div>
           </SkinImageViewport>
         </div>

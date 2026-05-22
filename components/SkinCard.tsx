@@ -40,14 +40,18 @@ export function SkinCard({ skin }: { skin: Skin }) {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.2),transparent_55%)]" />
         </div>
         <SkinImageViewport className="h-[200px] w-full shadow-glow-sm">
-          <div className="relative h-full w-full">
-            <Image
-              src={skin.image}
-              alt={skin.name}
-              fill
-              sizes="(max-width:768px) 100vw, 280px"
-              className="object-contain object-center drop-shadow-[0_12px_36px_rgba(0,0,0,0.75)] transition duration-500 group-hover:scale-[1.02]"
-            />
+          <div className="relative flex h-full w-full items-center justify-center">
+            {skin.image ? (
+              <Image
+                src={skin.image}
+                alt={skin.name}
+                fill
+                sizes="(max-width:768px) 100vw, 280px"
+                className="object-contain object-center drop-shadow-[0_12px_36px_rgba(0,0,0,0.75)] transition duration-500 group-hover:scale-[1.02]"
+              />
+            ) : (
+              <span className="text-4xl text-white/10">?</span>
+            )}
           </div>
         </SkinImageViewport>
         {skin.stattrak ? (
