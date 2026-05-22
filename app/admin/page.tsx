@@ -28,9 +28,6 @@ export default function AdminPage() {
   const [addName, setAddName] = useState('')
   const [addImage, setAddImage] = useState('')
   const [addPreview, setAddPreview] = useState('')
-  const [addCondition, setAddCondition] = useState('')
-  const [addRarity, setAddRarity] = useState('')
-  const [addWeapon, setAddWeapon] = useState('')
 
   // Edit
   const [editSkin, setEditSkin] = useState<AdminSkin | null>(null)
@@ -66,9 +63,6 @@ export default function AdminPage() {
       if (data.ok && data.image) {
         setAddImage(data.image)
         setAddPreview(data.image)
-        if (data.condition) setAddCondition(data.condition)
-        if (data.rarity) setAddRarity(data.rarity)
-        if (data.weaponType) setAddWeapon(data.weaponType)
       } else {
         setError('Rasm topilmadi. Skin nomini tekshiring.')
       }
@@ -90,9 +84,6 @@ export default function AdminPage() {
         action: 'add',
         name: addName,
         image: addImage,
-        condition: addCondition,
-        rarity: addRarity,
-        weaponType: addWeapon,
       }),
     })
     const data = await res.json()
@@ -101,9 +92,6 @@ export default function AdminPage() {
       setAddName('')
       setAddImage('')
       setAddPreview('')
-      setAddCondition('')
-      setAddRarity('')
-      setAddWeapon('')
       setError('')
       setTab('list')
       load()
@@ -222,23 +210,7 @@ export default function AdminPage() {
               </div>
             )}
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label className="text-xs text-white/50 uppercase tracking-wider">Weapon</label>
-                <input value={addWeapon} onChange={(e) => setAddWeapon(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50" />
-              </div>
-              <div>
-                <label className="text-xs text-white/50 uppercase tracking-wider">Rarity</label>
-                <input value={addRarity} onChange={(e) => setAddRarity(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50" />
-              </div>
-              <div>
-                <label className="text-xs text-white/50 uppercase tracking-wider">Condition</label>
-                <input value={addCondition} onChange={(e) => setAddCondition(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50" />
-              </div>
-            </div>
+
 
             <div className="flex gap-3">
               <button onClick={addSkin} disabled={loading || !addImage}
