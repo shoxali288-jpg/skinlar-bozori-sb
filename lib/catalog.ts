@@ -1,5 +1,5 @@
 import type { Skin } from '@/lib/types';
-import { getManualSkins } from '@/lib/manual-skins';
+import { getCustomSkins } from '@/lib/store';
 import https from 'https';
 
 const STEAM_ID = '76561198712742591';
@@ -130,7 +130,7 @@ async function fetchFromSteam(): Promise<Skin[]> {
 
 export async function getAllSkins(): Promise<Skin[]> {
   const now = Date.now();
-  if (cached && now - lastFetch < CACHE_TTL) return [...cached, ...getManualSkins()];
+  if (cached && now - lastFetch < CACHE_TTL) return [...cached, ...getCustomSkins()];
 
   if (!lastFetch) {
     cached = await fetchFromSteam();
@@ -143,7 +143,7 @@ export async function getAllSkins(): Promise<Skin[]> {
   }
 
   const steam = cached || []
-  return [...steam, ...getManualSkins()];
+  return [...steam, ...getCustomSkins()];
 }
 
 export async function getSkinById(id: string): Promise<Skin | undefined> {
