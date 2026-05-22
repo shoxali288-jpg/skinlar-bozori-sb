@@ -52,7 +52,7 @@ async function sendWelcome(chatId: number, fromId: number) {
   await deletePrev(chatId)
   const res = await callTelegram('sendPhoto', {
     chat_id: chatId,
-    photo: `${SITE_URL}/api/welcome-photo`,
+    photo: `${SITE_URL}/api/welcome-photo?_=${Date.now()}`,
     caption: WELCOME,
     parse_mode: 'HTML',
     reply_markup: { inline_keyboard: buttons },
