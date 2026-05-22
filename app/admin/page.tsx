@@ -47,6 +47,16 @@ export default function AdminPage() {
     document.title = 'Admin Panel — SB'
   }, [])
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setAddImageUrl(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
   const addSkin = async () => {
     if (!addName.trim()) {
       setError('Skin nomini kiriting')
@@ -170,11 +180,14 @@ export default function AdminPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-white/50 uppercase tracking-wider">Rasm URL</label>
+              <label className="text-xs text-white/50 uppercase tracking-wider">Rasm URL yoki fayl</label>
               <input value={addImageUrl} onChange={(e) => setAddImageUrl(e.target.value)}
-                placeholder="https://steamcommunity.com/economy/image/..."
+                placeholder="https://... yoki pastdan fayl tanlang"
                 className="mt-1 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white outline-none focus:border-[#a855f7]/50 transition"
                 style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.1)' }}
+              />
+              <input type="file" accept="image/*" onChange={handleFileSelect}
+                className="mt-2 w-full text-xs text-white/50 file:mr-3 file:rounded-xl file:border-0 file:bg-[#a855f7]/20 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-[#a855f7] hover:file:bg-[#a855f7]/30"
               />
             </div>
 
