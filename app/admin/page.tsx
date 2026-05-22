@@ -63,24 +63,26 @@ export default function AdminPage() {
         body: JSON.stringify({ action: 'fetch_image', name: addName }),
       })
       const data = await res.json()
-      if (data.ok && data.image) {
-        setAddImage(data.image)
-        setAddPreview(data.image)
+      if (data.ok) {
+        if (data.image) {
+          setAddImage(data.image)
+          setAddPreview(data.image)
+        }
         setAddWeapon(data.weaponType || '')
         setAddRarity(data.rarity || '')
         setAddCondition(data.condition || '')
       } else {
-        setError('Rasm topilmadi. Skin nomini tekshiring.')
+        setError('Skin topilmadi. Nomni tekshiring.')
       }
     } catch {
-      setError('Rasm topilmadi. Skin nomini tekshiring.')
+      setError('Xatolik yuz berdi.')
     }
     setLoading(false)
   }
 
   const addSkin = async () => {
-    if (!addName.trim() || !addImage) {
-      setError('Avval rasmni yuklang')
+    if (!addName.trim()) {
+      setError('Skin nomini kiriting')
       return
     }
     setLoading(true)
@@ -209,29 +211,33 @@ export default function AdminPage() {
               {loading ? 'Yuklanmoqda...' : '🔍 Rasmni topish'}
             </button>
 
-            {addPreview && (
+            {(addPreview || addWeapon || addRarity) && (
               <div className="rounded-xl border border-[#a855f7]/20 bg-black/40 p-4 text-center"
                 style={{ boxShadow: '0 0 15px rgba(168,85,247,0.1)' }}>
-                <div className="relative w-full h-40 mx-auto max-w-[300px]">
-                  <Image src={addPreview} alt="Preview" fill className="object-contain" />
-                </div>
-                <p className="mt-2 text-xs text-white/50">Rasm topildi</p>
-                {(addWeapon || addRarity || addCondition) && (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <div className="rounded-lg border border-white/5 bg-black/40 p-2">
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Weapon</p>
-                      <p className="mt-0.5 text-xs font-medium text-white">{addWeapon || '-'}</p>
-                    </div>
-                    <div className="rounded-lg border border-white/5 bg-black/40 p-2">
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Rarity</p>
-                      <p className="mt-0.5 text-xs font-medium text-[#a855f7]">{addRarity || '-'}</p>
-                    </div>
-                    <div className="rounded-lg border border-white/5 bg-black/40 p-2">
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Condition</p>
-                      <p className="mt-0.5 text-xs font-medium text-white">{addCondition || '-'}</p>
-                    </div>
+                {addPreview ? (
+                  <div className="relative w-full h-40 mx-auto max-w-[300px]">
+                    <Image src={addPreview} alt="Preview" fill className="object-contain" />
+                  </div>
+                ) : (
+                  <div className="w-full h-20 mx-auto max-w-[300px] flex items-center justify-center">
+                    <span className="text-xs text-white/30">Rasm mavjud emas</span>
                   </div>
                 )}
+                <p className="mt-2 text-xs text-white/50">{addPreview ? 'Rasm topildi' : 'Rasm topilmadi, skin baribir saqlanadi'}</p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-white/5 bg-black/40 p-2">
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider">Weapon</p>
+                    <p className="mt-0.5 text-xs font-medium text-white">{addWeapon || '-'}</p>
+                  </div>
+                  <div className="rounded-lg border border-white/5 bg-black/40 p-2">
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider">Rarity</p>
+                    <p className="mt-0.5 text-xs font-medium text-[#a855f7]">{addRarity || '-'}</p>
+                  </div>
+                  <div className="rounded-lg border border-white/5 bg-black/40 p-2">
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider">Condition</p>
+                    <p className="mt-0.5 text-xs font-medium text-white">{addCondition || '-'}</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -299,8 +305,12 @@ export default function AdminPage() {
                   <div key={s.id}
                     className="rounded-xl border border-white/5 bg-black/60 p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-4 transition hover:border-[#a855f7]/20"
                     style={{ boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.05)' }}>
-                    <div className="relative w-full sm:w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-black/40">
-                      <Image src={s.image} alt={s.name} fill className="object-contain" />
+                    <div className="relative w-full sm:w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-black/40 flex items-center justify-center">
+                      {s.image ? (
+                        <Image src={s.image} alt={s.name} fill className="object-contain" />
+                      ) : (
+                        <span className="text-2xl text-white/20">?</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-white truncate">{s.name}</h3>
