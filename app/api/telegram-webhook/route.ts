@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addManualSkin, removeManualSkin, getManualSkinsList, getManualSkins } from '@/lib/manual-skins'
 import { getSteamSkinImage } from '@/lib/steam-image'
-import { put } from '@vercel/blob'
+import { put, list } from '@vercel/blob'
 import fs from 'fs'
 
 const BOT_TOKEN = process.env.BOT_TOKEN || ''
-const ADMIN_USERNAME = 'shoxsvoy'
-const ADMIN_TELEGRAM_ID = 6474297315
-const SITE_URL = 'https://skinlar-bozori-sb.vercel.app'
+const ADMIN_ID = Number(process.env.ADMIN_ID) || 6474297315
+const SITE_URL = process.env.SITE_URL || 'https://skinlar-bozori-sb.vercel.app'
 
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
+const USERS_BLOB_KEY = 'bot-users.json'
 
 interface UserInfo {
   id: number
@@ -18,10 +18,39 @@ interface UserInfo {
   last_name?: string
 }
 
-let users: Map<number, UserInfo> = new Map()
+let usersCache: UserInfo[] | null = null
 let lastBotMsg: Map<number, number> = new Map()
-let welcomePhoto: string | null = null
-let adminUserId: number | null = null
+
+async function loadUsers(): Promise<UserInfo[]> {
+  if (usersCache !== null) return usersCache
+  try {
+    const { blobs } = await list({ prefix: USERS_BLOB_KEY, limit: 1 })
+    if (blobs.length > 0) {
+      const res = await fetch(blobs[0].url)
+      if (res.ok) {
+        usersCache = await res.json()
+        return usersCache!
+      }
+    }
+  } catch {}
+  usersCache = []
+  return usersCache
+}
+
+async function saveUsers(users: UserInfo[]) {
+  usersCache = users
+  try {
+    await put(USERS_BLOB_KEY, JSON.stringify(users), { contentType: 'application/json', access: 'public', addRandomSuffix: false })
+  } catch {}
+}
+
+async function registerUser(user: { id: number; username?: string; first_name?: string; last_name?: string }) {
+  const users = await loadUsers()
+  if (!users.some((u) => u.id === user.id)) {
+    users.push({ id: user.id, username: user.username, first_name: user.first_name, last_name: user.last_name })
+    await saveUsers(users)
+  }
+}
 
 async function deletePrev(chatId: number) {
   const prevId = lastBotMsg.get(chatId)
@@ -50,7 +79,7 @@ async function sendMessage(chatId: number, text: string, extra?: Record<string, 
   }
 }
 
-async function sendWelcome(chatId: number, noPhoto?: boolean) {
+async function sendWelcome(chatId: number) {
   const text = `Assalomu alaykum.
 
 Skinlar Bozori'ga xush kelibsiz 🔥
@@ -64,20 +93,13 @@ Bu yerda siz:
 
 🚀 Tezkor • Ishonchli • Premium`
 
-  if (noPhoto) {
-    await sendMessage(chatId, text, {
-      reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
-    })
-    return
-  }
-
   await deletePrev(chatId)
   const res = await fetch(`${TELEGRAM_API}/sendPhoto`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      photo: welcomePhoto || `${SITE_URL}/api/welcome-photo`,
+      photo: `${SITE_URL}/api/welcome-photo`,
       caption: text,
       parse_mode: 'HTML',
       reply_markup: { inline_keyboard: [[{ text: 'SB', url: SITE_URL }]] },
@@ -92,7 +114,7 @@ Bu yerda siz:
 async function sendAdminMenu(chatId: number) {
   const text = `🔐 <b>Admin panel</b>
 
-Xush kelibsiz, @${ADMIN_USERNAME}!
+Xush kelibsiz!
 
 Quyidagi bo'limlardan birini tanlang:`
 
@@ -110,7 +132,8 @@ Quyidagi bo'limlardan birini tanlang:`
 async function handleAdminCallback(chatId: number, callbackData: string) {
   switch (callbackData) {
     case 'admin_users': {
-      const count = users.size
+      const allUsers = await loadUsers()
+      const count = allUsers.length
       if (count === 0) {
         await sendMessage(chatId, `👥 <b>Foydalanuvchilar:</b> 0\n\nHali foydalanuvchilar yo\'q`, {
           parse_mode: 'HTML',
@@ -122,7 +145,7 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       }
       
       let list = ''
-      for (const [, info] of users) {
+      for (const info of allUsers) {
         const name = info.username 
           ? `@${info.username}` 
           : (info.first_name || '') + (info.last_name ? ` ${info.last_name}` : '')
@@ -138,10 +161,11 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       break
     }
     case 'admin_stats': {
+      const allUsers = await loadUsers()
       const manual = await getManualSkins()
       await sendMessage(
         chatId,
-        `📊 <b>Statistika</b>\n\n👥 Foydalanuvchilar: ${users.size}\n📦 Qo\'lda qo\'shilgan skinlar: ${manual.length}`,
+        `📊 <b>Statistika</b>\n\n👥 Foydalanuvchilar: ${allUsers.length}\n📦 Qo\'lda qo\'shilgan skinlar: ${manual.length}`,
         { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔙 Orqaga', callback_data: 'admin_back' }]] } },
       )
       break
@@ -224,24 +248,21 @@ export async function POST(request: NextRequest) {
       const chatId = chat.id
       const username = from?.username || ''
 
-      if (!users.has(chatId)) {
-        users.set(chatId, {
-          id: chatId,
-          username: from?.username,
-          first_name: from?.first_name,
-          last_name: from?.last_name,
-        })
-      }
+      const isAdmin = from.id === ADMIN_ID || username.toLowerCase() === 'shoxsvoy'
 
-      const isAdmin = from.id === ADMIN_TELEGRAM_ID || username.toLowerCase() === ADMIN_USERNAME
-      if (isAdmin) adminUserId = from.id
+      // Register user (persistent storage)
+      await registerUser({
+        id: from.id,
+        username: from?.username,
+        first_name: from?.first_name,
+        last_name: from?.last_name,
+      })
 
       // Photo → only admin can set welcome photo
       if (photo && photo.length > 0) {
         if (isAdmin) {
           const fileId = photo[photo.length - 1].file_id
-          welcomePhoto = `${SITE_URL}/api/welcome-photo`
-          // Download photo from Telegram and save to /tmp/ + Blob
+          // Download photo from Telegram and save to Blob for persistence
           try {
             const fileRes = await fetch(`${TELEGRAM_API}/getFile?file_id=${fileId}`)
             const fileData = await fileRes.json()
@@ -249,7 +270,6 @@ export async function POST(request: NextRequest) {
               const imgRes = await fetch(`${TELEGRAM_API}/file/${BOT_TOKEN}/${fileData.result.file_path}`)
               const imgBuf = Buffer.from(await imgRes.arrayBuffer())
               fs.writeFileSync('/tmp/welcome.jpg', imgBuf)
-              // Also save to Blob for persistence
               await put('welcome.jpg', imgBuf, { contentType: 'image/jpeg', access: 'public', addRandomSuffix: false })
             }
           } catch {}

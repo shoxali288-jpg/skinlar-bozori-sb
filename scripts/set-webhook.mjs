@@ -5,7 +5,7 @@ if (!BOT_TOKEN) {
 }
 
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
-const SITE_URL = 'https://skinlar-bozori-sb.vercel.app'
+const SITE_URL = process.env.SITE_URL || 'https://skinlar-bozori-sb.vercel.app'
 const WEBHOOK_URL = `${SITE_URL}/api/telegram-webhook`
 
 async function main() {
