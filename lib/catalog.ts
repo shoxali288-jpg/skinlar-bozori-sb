@@ -122,6 +122,7 @@ async function fetchFromSteam(): Promise<Skin[]> {
       priceUsd: uzsPrice,
       available: true,
       image: iconUrl,
+      source: 'steam',
     });
   }
 
@@ -130,16 +131,21 @@ async function fetchFromSteam(): Promise<Skin[]> {
 
 export async function getAllSkins(): Promise<Skin[]> {
   const now = Date.now();
-  if (cached && now - lastFetch < CACHE_TTL) return [...cached, ...(await getManualSkins())];
+  if (cached && now - lastFetch < CACHE_TTL) {
+    // Manual skins always loaded fresh from permanent storage
+    return [...cached, ...(await getManualSkins())];
+  }
 
-  if (!lastFetch) {
+  // Fetch fresh Steam data (async, doesn't block)
+  fetchFromSteam().then((s) => {
+    cached = s;
+    lastFetch = Date.now();
+  });
+
+  // If no cached data at all, wait for first fetch
+  if (!cached) {
     cached = await fetchFromSteam();
     lastFetch = now;
-  } else {
-    fetchFromSteam().then((s) => {
-      cached = s;
-      lastFetch = Date.now();
-    });
   }
 
   const steam = cached || []

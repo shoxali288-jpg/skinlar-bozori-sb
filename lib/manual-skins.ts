@@ -64,6 +64,7 @@ export async function addManualSkin(
     priceUsd: 0,
     available: true,
     image: image || '/placeholder.png',
+    source: 'manual',
   }
   skins.push(skin)
   cache = skins

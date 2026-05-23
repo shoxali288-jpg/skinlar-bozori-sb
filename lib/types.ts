@@ -10,6 +10,7 @@ export type Skin = {
   priceUsd: number;
   available: boolean;
   image: string;
+  source: 'steam' | 'manual';
 };
 
 export type CartLine = {

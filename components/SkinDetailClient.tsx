@@ -15,8 +15,8 @@ export function SkinDetailClient({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetch('/api/catalog')
       .then((r) => r.json())
-      .then((data: Skin[]) => {
-        const found = data.find((s) => s.id === params.id)
+      .then((data: { skins: Skin[] }) => {
+        const found = (data.skins || []).find((s) => s.id === params.id)
         setSkin(found || null)
         setLoading(false)
       })
