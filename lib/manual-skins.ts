@@ -1,5 +1,5 @@
 import type { Skin } from '@/lib/types'
-import { put, list, del } from '@vercel/blob'
+import { put, list } from '@vercel/blob'
 
 const BLOB_KEY = 'manual-skins.json'
 
@@ -20,20 +20,20 @@ async function loadFromBlob(): Promise<Skin[]> {
         return data
       }
     }
-  } catch {}
-  cache = []
-  return []
+    cache = []
+  } catch {
+    // Blob unavailable — keep cache=null so next call retries
+  }
+  return cache || []
 }
 
 async function saveToBlob(skins: Skin[]) {
   try {
     const json = JSON.stringify(skins)
-    const existing = await list({ prefix: BLOB_KEY, limit: 1 })
-    if (existing.blobs.length > 0) {
-      await del(existing.blobs[0].url)
-    }
-    await put(BLOB_KEY, json, { contentType: 'application/json', access: 'public' })
-  } catch {}
+    await put(BLOB_KEY, json, { contentType: 'application/json', access: 'public', addRandomSuffix: false })
+  } catch (e) {
+    console.error('Blob save error:', e)
+  }
 }
 
 async function ensureLoaded(): Promise<Skin[]> {
