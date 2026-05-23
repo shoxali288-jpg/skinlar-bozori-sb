@@ -6,21 +6,23 @@ type SkinEntry = { id: string; name: string; image?: string; source?: string }
 
 export default function TgAdmin() {
   const [name, setName] = useState('')
-  const [allSkins, setAllSkins] = useState<SkinEntry[]>([])
   const [manualSkins, setManualSkins] = useState<SkinEntry[]>([])
+  const [allSkins, setAllSkins] = useState<SkinEntry[]>([])
+  const [hiddenIds, setHiddenIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
   const loadAll = useCallback(async () => {
     try {
-      const [catRes, manRes] = await Promise.all([
-        fetch('/api/catalog'),
+      const [manRes, adminRes] = await Promise.all([
         fetch('/api/manual-skins'),
+        fetch('/api/manual-skins', { method: 'PUT' }),
       ])
-      const catData = await catRes.json()
       const manData = await manRes.json()
-      setAllSkins((catData.skins || []).map((s: SkinEntry) => ({ id: s.id, name: s.name, image: s.image, source: s.source })))
+      const adminData = await adminRes.json()
       setManualSkins(manData.map((s: SkinEntry) => ({ id: s.id, name: s.name, image: s.image, source: s.source })))
+      setAllSkins((adminData.allSkins || []).map((s: SkinEntry) => ({ id: s.id, name: s.name, image: s.image, source: s.source })))
+      setHiddenIds(adminData.hidden || [])
     } catch {}
   }, [])
 
@@ -65,6 +67,19 @@ export default function TgAdmin() {
       await loadAll()
     } catch {}
   }
+
+  const toggleHide = async (skinId: string, isHidden: boolean) => {
+    try {
+      await fetch('/api/manual-skins', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: isHidden ? 'unhide' : 'hide', skinId }),
+      })
+      await loadAll()
+    } catch {}
+  }
+
+  const steamSkins = allSkins.filter(s => s.source !== 'manual')
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-gray-950 p-4 text-white">
@@ -119,17 +134,30 @@ export default function TgAdmin() {
 
       <div className="mt-4 rounded-2xl border border-white/5 bg-white/[0.02] p-4">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/30">
-          Steam inventardagi skinlar ({allSkins.filter(s => s.source !== 'manual').length})
+          Steam skinlar ({steamSkins.length})
         </p>
-        <div className="space-y-1">
-          {allSkins.filter(s => s.source !== 'manual').slice(0, 20).map((s) => (
-            <div key={s.id} className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-1.5">
-              {s.image && <img src={s.image} alt="" className="h-7 w-7 rounded object-cover" />}
-              <span className="flex-1 text-xs text-white/50">{s.name}</span>
-              <span className="rounded bg-white/5 px-1.5 py-0.5 text-[9px] text-white/30">STEAM</span>
-            </div>
-          ))}
-        </div>
+        {steamSkins.length === 0 ? (
+          <p className="text-sm text-white/30">Steam inventarda skin yo&apos;q</p>
+        ) : (
+          <div className="space-y-2">
+            {steamSkins.map((s) => {
+              const isHidden = hiddenIds.includes(s.id)
+              return (
+                <div key={s.id} className={`flex items-center gap-3 rounded-xl px-3 py-2 ${isHidden ? 'bg-white/[0.02] opacity-40' : 'bg-white/5'}`}>
+                  {s.image && <img src={s.image} alt="" className="h-9 w-9 rounded-lg object-cover" />}
+                  <span className="flex-1 text-sm">{s.name}</span>
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-[9px] text-white/30">STEAM</span>
+                  <button
+                    onClick={() => toggleHide(s.id, isHidden)}
+                    className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${isHidden ? 'bg-green-500/20 text-green-300 hover:bg-green-500/30' : 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'}`}
+                  >
+                    {isHidden ? 'Ko\'rsatish' : 'Yashirish'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
