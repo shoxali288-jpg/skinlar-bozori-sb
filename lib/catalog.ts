@@ -130,7 +130,7 @@ async function fetchFromSteam(): Promise<Skin[]> {
 
 export async function getAllSkins(): Promise<Skin[]> {
   const now = Date.now();
-  if (cached && now - lastFetch < CACHE_TTL) return [...cached, ...getManualSkins()];
+  if (cached && now - lastFetch < CACHE_TTL) return [...cached, ...(await getManualSkins())];
 
   if (!lastFetch) {
     cached = await fetchFromSteam();
@@ -143,7 +143,7 @@ export async function getAllSkins(): Promise<Skin[]> {
   }
 
   const steam = cached || []
-  return [...steam, ...getManualSkins()];
+  return [...steam, ...(await getManualSkins())];
 }
 
 export async function getSkinById(id: string): Promise<Skin | undefined> {

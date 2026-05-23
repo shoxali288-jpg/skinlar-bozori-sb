@@ -1,19 +1,57 @@
 import type { Skin } from '@/lib/types'
+import { put, list, del } from '@vercel/blob'
 
-let manualSkins: Skin[] = []
+const BLOB_KEY = 'manual-skins.json'
+
+let cache: Skin[] | null = null
 
 function generateId(): string {
   return `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function addManualSkin(
+async function loadFromBlob(): Promise<Skin[]> {
+  try {
+    const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 })
+    if (blobs.length > 0) {
+      const res = await fetch(blobs[0].url)
+      if (res.ok) {
+        const data: Skin[] = await res.json()
+        cache = data
+        return data
+      }
+    }
+  } catch {}
+  cache = []
+  return []
+}
+
+async function saveToBlob(skins: Skin[]) {
+  try {
+    const json = JSON.stringify(skins)
+    const existing = await list({ prefix: BLOB_KEY, limit: 1 })
+    if (existing.blobs.length > 0) {
+      await del(existing.blobs[0].url)
+    }
+    await put(BLOB_KEY, json, { contentType: 'application/json', access: 'public' })
+  } catch {}
+}
+
+async function ensureLoaded(): Promise<Skin[]> {
+  if (cache === null) {
+    return await loadFromBlob()
+  }
+  return cache
+}
+
+export async function addManualSkin(
   name: string,
   weaponType: string,
   condition: string,
   rarity: string,
   image: string,
   floatValue: number,
-): Skin {
+): Promise<Skin> {
+  const skins = await ensureLoaded()
   const skin: Skin = {
     id: generateId(),
     name,
@@ -27,22 +65,27 @@ export function addManualSkin(
     available: true,
     image: image || '/placeholder.png',
   }
-
-  manualSkins.push(skin)
+  skins.push(skin)
+  cache = skins
+  await saveToBlob(skins)
   return skin
 }
 
-export function removeManualSkin(id: string): boolean {
-  const idx = manualSkins.findIndex((s) => s.id === id)
+export async function removeManualSkin(id: string): Promise<boolean> {
+  const skins = await ensureLoaded()
+  const idx = skins.findIndex((s) => s.id === id)
   if (idx === -1) return false
-  manualSkins.splice(idx, 1)
+  skins.splice(idx, 1)
+  cache = skins
+  await saveToBlob(skins)
   return true
 }
 
-export function getManualSkins(): Skin[] {
-  return [...manualSkins]
+export async function getManualSkins(): Promise<Skin[]> {
+  return [...(await ensureLoaded())]
 }
 
-export function getManualSkinsList(): { id: string; name: string }[] {
-  return manualSkins.map((s) => ({ id: s.id, name: s.name }))
+export async function getManualSkinsList(): Promise<{ id: string; name: string }[]> {
+  const skins = await ensureLoaded()
+  return skins.map((s) => ({ id: s.id, name: s.name }))
 }

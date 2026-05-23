@@ -3,7 +3,7 @@ import { addManualSkin, removeManualSkin, getManualSkins } from '@/lib/manual-sk
 import { getSteamSkinImage } from '@/lib/steam-image'
 
 export async function GET() {
-  const skins = getManualSkins()
+  const skins = await getManualSkins()
   return NextResponse.json(skins)
 }
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const weaponType = parts.length > 1 ? parts[0].trim() : ''
   const imgUrl = body.image || await getSteamSkinImage(name)
 
-  const skin = addManualSkin(name, weaponType, '', '', imgUrl, 0)
+  const skin = await addManualSkin(name, weaponType, '', '', imgUrl, 0)
   return NextResponse.json(skin)
 }
 
@@ -25,6 +25,6 @@ export async function DELETE(request: NextRequest) {
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
-  const ok = removeManualSkin(id)
+  const ok = await removeManualSkin(id)
   return NextResponse.json({ ok })
 }

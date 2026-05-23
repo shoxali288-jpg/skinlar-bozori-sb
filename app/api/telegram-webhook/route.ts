@@ -136,7 +136,7 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       break
     }
     case 'admin_stats': {
-      const manual = getManualSkins()
+      const manual = await getManualSkins()
       await sendMessage(
         chatId,
         `📊 <b>Statistika</b>\n\n👥 Foydalanuvchilar: ${users.size}\n📦 Qo\'lda qo\'shilgan skinlar: ${manual.length}`,
@@ -153,7 +153,7 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
       break
     }
     case 'admin_delete_skin': {
-      const list = getManualSkinsList()
+      const list = await getManualSkinsList()
       if (list.length === 0) {
         await sendMessage(
           chatId,
@@ -185,7 +185,7 @@ async function handleAdminCallback(chatId: number, callbackData: string) {
     default: {
       if (callbackData.startsWith('admin_del_')) {
         const id = callbackData.slice('admin_del_'.length)
-        const removed = removeManualSkin(id)
+        const removed = await removeManualSkin(id)
         if (removed) {
           await sendMessage(chatId, `✅ Skin o'chirildi!`, {
             parse_mode: 'HTML',
@@ -303,7 +303,7 @@ export async function POST(request: NextRequest) {
           const imgUrl = await getSteamSkinImage(skinName)
           const parts = skinName.split(' | ')
           const weaponType = parts.length > 1 ? parts[0].trim() : ''
-          addManualSkin(skinName, weaponType, '', '', imgUrl, 0)
+          await addManualSkin(skinName, weaponType, '', '', imgUrl, 0)
           
           await sendMessage(
             chatId,
@@ -319,7 +319,7 @@ export async function POST(request: NextRequest) {
         const imgUrl = await getSteamSkinImage(name)
         const parts = name.split(' | ')
         const weaponType = parts.length > 1 ? parts[0].trim() : ''
-        addManualSkin(name, weaponType, '', '', imgUrl, 0)
+        await addManualSkin(name, weaponType, '', '', imgUrl, 0)
         
         await sendMessage(
           chatId,
