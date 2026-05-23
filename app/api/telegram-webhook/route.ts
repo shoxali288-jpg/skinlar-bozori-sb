@@ -267,13 +267,26 @@ export async function POST(request: NextRequest) {
       if (text.toLowerCase() === '/start') {
         if (isAdmin) {
           await deletePrev(chatId)
+          const fullText = `Assalomu alaykum.
+
+Skinlar Bozori'ga xush kelibsiz 🔥
+
+Bu yerda siz:
+🎯 CS2 skinlarni sotib olishingiz
+💸 Skin sotishingiz
+⚡ Eng yaxshi narxlarni topishingiz mumkin
+
+🛒 Marketni ochish uchun pastdagi "SB" tugmasini bosing.
+
+🚀 Tezkor • Ishonchli • Premium`
           const res = await fetch(`${TELEGRAM_API}/sendPhoto`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
               photo: welcomePhoto || `${SITE_URL}/api/welcome-photo`,
-              caption: `Assalomu alaykum, Admin! 🔐\n\n👉 ${SITE_URL}\n\nSkin nomini yozib qo\'shing yoki pastdagi tugmani bosing.`,
+              caption: fullText,
+              parse_mode: 'HTML',
               reply_markup: { keyboard: [[{ text: '🔐 Admin', web_app: { url: `${SITE_URL}/tg-admin` } }]], resize_keyboard: true },
             }),
           })
