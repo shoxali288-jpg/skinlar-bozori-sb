@@ -5,6 +5,7 @@ import fs from 'fs'
 
 const BOT_TOKEN = process.env.BOT_TOKEN || ''
 const ADMIN_USERNAME = 'shoxsvoy'
+const ADMIN_TELEGRAM_ID = 6474297315
 const SITE_URL = 'https://skinlar-bozori-sb.vercel.app'
 
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`
@@ -98,8 +99,8 @@ Quyidagi bo'limlardan birini tanlang:`
     parse_mode: 'HTML',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🌐 Saytni ochish', url: SITE_URL }],
-        [{ text: '⚙️ Admin panel (Mini App)', web_app: { url: `${SITE_URL}/tg-admin` } }],
+        [{ text: '🌐 Sayt', url: SITE_URL }],
+        [{ text: '⚙️ Admin Panel', web_app: { url: `${SITE_URL}/tg-admin` } }],
       ],
     },
   })
@@ -231,12 +232,12 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      const isAdmin = username.toLowerCase() === ADMIN_USERNAME
+      const isAdmin = from.id === ADMIN_TELEGRAM_ID || username.toLowerCase() === ADMIN_USERNAME
       if (isAdmin) adminUserId = from.id
 
       // Photo → only admin can set welcome photo
       if (photo && photo.length > 0) {
-        if (isAdmin || from.id === adminUserId) {
+        if (isAdmin) {
           const fileId = photo[photo.length - 1].file_id
           welcomePhoto = `${SITE_URL}/api/welcome-photo`
           // Download photo from Telegram and save to /tmp/
@@ -263,37 +264,29 @@ export async function POST(request: NextRequest) {
 
 
 
-      // /start → welcome with admin keyboard at bottom
+      // /start → welcome (same for everyone)
       if (text.toLowerCase() === '/start') {
+        await sendWelcome(chatId)
+
+        // Only for admin: set custom keyboard with Admin Panel button
         if (isAdmin) {
-          await deletePrev(chatId)
-          const fullText = `Assalomu alaykum.
-
-Skinlar Bozori'ga xush kelibsiz 🔥
-
-Bu yerda siz:
-🎯 CS2 skinlarni sotib olishingiz
-💸 Skin sotishingiz
-⚡ Eng yaxshi narxlarni topishingiz mumkin
-
-🛒 Marketni ochish uchun pastdagi "SB" tugmasini bosing.
-
-🚀 Tezkor • Ishonchli • Premium`
-          const res = await fetch(`${TELEGRAM_API}/sendPhoto`, {
+          const kbRes = await fetch(`${TELEGRAM_API}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
-              photo: welcomePhoto || `${SITE_URL}/api/welcome-photo`,
-              caption: fullText,
-              parse_mode: 'HTML',
-              reply_markup: { keyboard: [[{ text: '🔐 Admin', web_app: { url: `${SITE_URL}/tg-admin` } }]], resize_keyboard: true },
+              text: '.',
+              reply_markup: { keyboard: [[{ text: '⚙️ Admin Panel', web_app: { url: `${SITE_URL}/tg-admin` } }]], resize_keyboard: true },
             }),
           })
-          const data = await res.json()
-          if (data.result?.message_id) lastBotMsg.set(chatId, data.result.message_id)
-        } else {
-          await sendWelcome(chatId)
+          const kbData = await kbRes.json()
+          if (kbData.result?.message_id) {
+            await fetch(`${TELEGRAM_API}/deleteMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, message_id: kbData.result.message_id }),
+            })
+          }
         }
         return NextResponse.json({ ok: true })
       }
