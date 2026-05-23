@@ -29,6 +29,15 @@ export async function GET() {
     }
   } catch {}
 
+  // Fallback to welcome.jpg in public/
+  const welcomePublicPath = path.join(process.cwd(), 'public', 'welcome.jpg')
+  if (fs.existsSync(welcomePublicPath)) {
+    const buf = fs.readFileSync(welcomePublicPath)
+    return new NextResponse(buf, {
+      headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' },
+    })
+  }
+
   // Fallback to default logo
   const publicPath = path.join(process.cwd(), 'public', 'logo.jpg')
   if (fs.existsSync(publicPath)) {
