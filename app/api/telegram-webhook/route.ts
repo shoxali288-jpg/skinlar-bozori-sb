@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addManualSkin, removeManualSkin, getManualSkinsList, getManualSkins } from '@/lib/manual-skins'
 import { getSteamSkinImage } from '@/lib/steam-image'
+import { put } from '@vercel/blob'
 import fs from 'fs'
 
 const BOT_TOKEN = process.env.BOT_TOKEN || ''
@@ -240,7 +241,7 @@ export async function POST(request: NextRequest) {
         if (isAdmin) {
           const fileId = photo[photo.length - 1].file_id
           welcomePhoto = `${SITE_URL}/api/welcome-photo`
-          // Download photo from Telegram and save to /tmp/
+          // Download photo from Telegram and save to /tmp/ + Blob
           try {
             const fileRes = await fetch(`${TELEGRAM_API}/getFile?file_id=${fileId}`)
             const fileData = await fileRes.json()
@@ -248,6 +249,8 @@ export async function POST(request: NextRequest) {
               const imgRes = await fetch(`${TELEGRAM_API}/file/${BOT_TOKEN}/${fileData.result.file_path}`)
               const imgBuf = Buffer.from(await imgRes.arrayBuffer())
               fs.writeFileSync('/tmp/welcome.jpg', imgBuf)
+              // Also save to Blob for persistence
+              await put('welcome.jpg', imgBuf, { contentType: 'image/jpeg', access: 'public', addRandomSuffix: false })
             }
           } catch {}
           await sendMessage(chatId, `✅ Rasm saqlandi! Endi /start da shu rasm ko'rinadi.`)
